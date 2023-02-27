@@ -85,6 +85,29 @@ reg re78 train age educ black hisp re74 re75 if influence_train > influence_trai
 *	COMMENT ON THE DIFFERENT RESULTS OF THE REGRESSION
 
 **# QUESTION 2
+cd "C:\Users\pulvi\OneDrive - Università Commerciale Luigi Bocconi\Depr(ESS)ion\Second Year\Micrometrics\PS\Micrometrics_PS\PS1"
+use "jtrain3.dta", clear
+/*
+	(a) Do a table with the same structure of TABLE 1 of item (a) in question 1 for the following covariates: age educ black hisp 	re74 re75 (note that nodegree is not present in the current dataset.) Add the corresponding columns to TABLE 1.
+*/
+
+local control_vars age educ black hisp re75 re74 
+balancetable train `control_vars' using TABLE_1_Ale.xls, ctitle("Mean C" "Mean T" "Diff. t-test") vce(robust)  leftctitle("Variable") varnames modify cell(H1)		//Note that, with option "wide" we can put the standard deviation of T and C next to the column of T and C, rather than in brackets below the values for the mean. 
+
+
+/* (b) Generate a variable named treated that randomly allocates half of observations to a (fake) treatment group and the other half to a (fake) control group. Fix a seed of 5 digits using the command set seed.
+*/
+
+* Generate a treatment variable 
+gen treatment= .
+
+* Fix a 5-digit seed 
+set seed 12345
+
+replace treatment = 1 if runiform() < 0.5
+replace treatment = 0 if missing(treatment) 
+
+
 
 
 
