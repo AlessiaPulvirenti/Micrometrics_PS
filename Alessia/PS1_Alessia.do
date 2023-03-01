@@ -226,7 +226,11 @@ However, Imbens and Rubin 2015, show that the sampling variance of the estimator
 2. the variance of the potential outcomes Y_i(0) over the no. of treated
 3. the population variance of the unit level treatment effect, i.e., the pop variance of Y_i(1) - Y_i(0), over the whole sample. We know thta this term is unobservable, because we never observe Y_i(1) and Y_i(0) for the same unit. 
 
-So the variance of Neyman's estimator /tau_hat is usually upward biased, leading to conservative confidence intervals for /tau_hat. There are two cases in which the bias of the sampling variance of the estimator disappears: 
+So the variance of Neyman's estimator /tau_hat is usually upward biased, leading to overly conservative confidence intervals for /tau_hat. If we allow for heterogeneous treatment effect, then this bias can only disappear whenever we apply simple random sampling from an infite population. 
+
+
+
+There are two cases in which the bias of the sampling variance of the estimator disappears: 
 1) The third element, i.e., the population variance of Y_i(1) - Y_i(0) is 0 whenever the TREATMENT EFFECT IS CONSTANT across all units. 
 2) On the other hand, assuming heterogeneous treatment effect, as asked by the question, the bias disappears whenever we consider that the sample is a random sample from an infinite population. 
 
