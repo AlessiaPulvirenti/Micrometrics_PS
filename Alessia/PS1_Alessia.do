@@ -228,8 +228,21 @@ However, Imbens and Rubin 2015, show that the sampling variance of the estimator
 
 So the variance of Neyman's estimator /tau_hat is usually upward biased, leading to conservative confidence intervals for /tau_hat. There are two cases in which the bias of the sampling variance of the estimator disappears: 
 1) The third element, i.e., the population variance of Y_i(1) - Y_i(0) is 0 whenever the TREATMENT EFFECT IS CONSTANT across all units. 
-2) 
+2) On the other hand, assuming heterogeneous treatment effect, as asked by the question, the bias disappears whenever we consider that the sample is a random sample from an infinite population. 
 
+
+(continue)
+*/
+
+
+/* (b) Describe Fisher's inference and replicate section 4.1 of Athey and Imbens (2017)
+in Stata. Do you arrive at their same p-value? If not, why? Hint: Note that you can draw motivation from third-parties for your own answer; for this case, we suggest that you read Hess (2017).
+*/
+
+
+
+/* (c) Read again the randomization plan in LaLonde (1986). On which grounds Athey and Imbens (2017)'s illustration of Fisherian inference on LaLonde (1986)'s paper could be criticized?
+*/
 
 
 
