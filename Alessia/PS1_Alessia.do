@@ -229,7 +229,7 @@ However, Imbens and Rubin 2015, show that the sampling variance of the estimator
 So the variance of Neyman's estimator /tau_hat is usually upward biased, leading to overly conservative confidence intervals for /tau_hat. If we allow for heterogeneous treatment effect, then this bias can only disappear whenever we apply simple random sampling from an infite population. 
 
 
-
+(alternativa/notes:)
 There are two cases in which the bias of the sampling variance of the estimator disappears: 
 1) The third element, i.e., the population variance of Y_i(1) - Y_i(0) is 0 whenever the TREATMENT EFFECT IS CONSTANT across all units. 
 2) On the other hand, assuming heterogeneous treatment effect, as asked by the question, the bias disappears whenever we consider that the sample is a random sample from an infinite population. 
@@ -239,13 +239,69 @@ There are two cases in which the bias of the sampling variance of the estimator 
 */
 
 
-/* (b) Describe Fisher's inference and replicate section 4.1 of Athey and Imbens (2017)
-in Stata. Do you arrive at their same p-value? If not, why? Hint: Note that you can draw motivation from third-parties for your own answer; for this case, we suggest that you read Hess (2017).
+/* (b) Describe Fisher's inference and replicate section 4.1 of Athey and Imbens (2017) in Stata. Do you arrive at their same p-value? If not, why? Hint: Note that you can draw motivation from third-parties for your own answer; for this case, we suggest that you read Hess (2017).
+*/
+
+use "jtrain2.dta", clear
+
+help randtreat
+
+randtreat, generate(treated_3) replace unequal(2/5 3/5) misfits(global) setseed(12345) 
+
+tab treated_3
+
+/*
+tab treated_3
+
+  treated_3 |      Freq.     Percent        Cum.
+------------+-----------------------------------
+          0 |        178       40.00       40.00
+          1 |        267       60.00      100.00
+------------+-----------------------------------
+      Total |        445      100.00
+
+	  
+--> We can see that we have 178 individuals in the treatment, rater than 180 as in the paper. 
+*/
+
+reg re78 train 
+/*By regressing earnings in 1978, we obtain the simple difference in average post-treatment earnings between T and C mentioned in Athey and Imbens
+*/
+
+* Now, we regress the outcome variable on the newly created treatment variable
+reg re78 treated_3
+
+
+
+//TO DO: LOOK AT HEB 2017 TO WRITE THE CODE OF THE ITERATION
+
+
+/*
+Fisher's inference is based on the ....
+
+
+
+In our iteration, we obtain a slightly different p-value than the one obtained by Athey and Imbens (2017). One of the reasons could be the fact that our reassignment of the treatment, through the function randtreat leads to 178 individuals in the Control group and 267 individuals in the Treatment group, rather than the desired randomisation into 180 vs 265. 
+
+
+
+
+
 */
 
 
 
+
+
 /* (c) Read again the randomization plan in LaLonde (1986). On which grounds Athey and Imbens (2017)'s illustration of Fisherian inference on LaLonde (1986)'s paper could be criticized?
+*/
+
+/*
+Stratification at the city level in LaLond (1986) randomisation plan. 
+Look at page 189 of Imbens and Rubin (2015) book for a complete discussion of Fisher's hypothesis (SUTVA) etc 
+
+
+
 */
 
 
