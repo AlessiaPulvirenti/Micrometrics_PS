@@ -182,21 +182,21 @@ outreg2 using Table_2.xls, adds(N_control, N_control, N_treated, N_treated) exce
 
 * (f)
 reg re78 $x_4
-tabstat $x_1 if e(sample)==1, statistics(count) by($x_1) save
+tabstat $x_4 if e(sample)==1, statistics(count) by($x_4) save
 return list
 scalar N_control = r(Stat1)[1,1]
 scalar N_treated = r(Stat2)[1,1]
 outreg2 using Table_2.xls, adds(N_control, N_control, N_treated, N_treated) excel append 
 *
 reg re78 $x_4 $x_2
-tabstat $x_1 if e(sample)==1, statistics(count) by($x_1) save
+tabstat $x_4 if e(sample)==1, statistics(count) by($x_4) save
 return list
 scalar N_control = r(Stat1)[1,1]
 scalar N_treated = r(Stat2)[1,1]
 outreg2 using Table_2.xls, adds(N_control, N_control, N_treated, N_treated) excel append
 *
 reg re78 $x_4 $x_2 $x_3 
-tabstat $x_1 if e(sample)==1, statistics(count) by($x_1) save
+tabstat $x_4 if e(sample)==1, statistics(count) by($x_4) save
 return list
 scalar N_control = r(Stat1)[1,1]
 scalar N_treated = r(Stat2)[1,1]
