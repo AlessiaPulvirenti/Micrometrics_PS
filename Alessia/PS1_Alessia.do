@@ -17,7 +17,7 @@ ssc install balancetable, replace
 help balancetable
 
 local control_vars age educ black hisp nodegree re75 re74 
-balancetable train `control_vars' using TABLE_1_Ale.xls, ctitle("Mean C" "Mean T" "Diff. t-test") vce(robust)  leftctitle("Variable") varnames replace		//Note that, with option "wide" we can put the standard deviation of T and C next to the column of T and C, rather than in brackets below the values for the mean. 
+balancetable train `control_vars' using TABLE_1_Ale.xls, ctitle("Mean C" "Mean T" "Diff. t-test") vce(robust)  leftctitle("Variable") varnames wide replace		//Note that, with option "wide" we can put the standard deviation of T and C next to the column of T and C, rather than in brackets below the values for the mean. 
 
 * COMMENT ON HOW MANY VARIABLES ARE BALANCED OR NOT. IS THAT WHAT YOU EXPECTED? (TO DO)
 
@@ -299,6 +299,8 @@ In our iteration, we obtain a slightly different p-value than the one obtained b
 /*
 Stratification at the city level in LaLond (1986) randomisation plan. 
 Look at page 189 of Imbens and Rubin (2015) book for a complete discussion of Fisher's hypothesis (SUTVA) etc 
+
+Something wrong with the way randomisation was 
 
 
 
