@@ -206,6 +206,12 @@ outreg2 using Table_2.xls, adds(N_control, N_control, N_treated, N_treated) exce
 
 
 
+** Question 3
+
+
+
+
+
 
 
 
