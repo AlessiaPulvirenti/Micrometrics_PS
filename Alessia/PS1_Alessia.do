@@ -244,29 +244,15 @@ There are two cases in which the bias of the sampling variance of the estimator 
 
 use "jtrain2.dta", clear
 
-help randtreat
-
-randtreat, generate(treated_3) replace unequal(2/5 3/5) misfits(global) setseed(12345) 
-
-tab treated_3
-
-/*
-tab treated_3
-
-  treated_3 |      Freq.     Percent        Cum.
-------------+-----------------------------------
-          0 |        178       40.00       40.00
-          1 |        267       60.00      100.00
-------------+-----------------------------------
-      Total |        445      100.00
-
-	  
---> We can see that we have 178 individuals in the treatment, rater than 180 as in the paper. 
-*/
-
-reg re78 train 
+reg re78 train, vce(robust)
 /*By regressing earnings in 1978, we obtain the simple difference in average post-treatment earnings between T and C mentioned in Athey and Imbens
 */
+scalar myb = _b[train]
+scalar list myb
+
+ritest train _b[train], reps(100000) seed(0) left: /// 
+	regress re78 train
+
 
 * Now, we regress the outcome variable on the newly created treatment variable
 reg re78 treated_3
