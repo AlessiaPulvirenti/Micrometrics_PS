@@ -369,15 +369,28 @@ quietly{
 
 
 ***********    a    ***********
+/*Under which conditions, allowing for heterogeneous treatment effects, is Neyman's inference unbiased?
+*/
+
+/*Neyman's inference is based on the estimation of the average treatment effect for the sample at hand, and to construct confidence intervals for the average treatment effect. 
+Assuming a FINITE SAMPLE, with no particular assumption on the construction of the sample itself, an unbiased estimator found by Neyman consists simply in the difference in average outcomes by treatment status. Assuming potential outcomes are fixed, so that the only stochastic component is the treatment status, D_i, Neyman constructs an estimator /tau_hat which is unbiased for /tau, the average treatment effect. 
+
+However, Imbens and Rubin 2015, show that the sampling variance of the estimator of the average treatment effect derived by Neyman, over the randomisation distribution is composed of three elements: 
+1. the variance of the potential outcomes Y_i(0) over the no. of control
+2. the variance of the potential outcomes Y_i(0) over the no. of treated
+3. the population variance of the unit level treatment effect, i.e., the pop variance of Y_i(1) - Y_i(0), over the whole sample. We know that this term is unobservable, because we never observe Y_i(1) and Y_i(0) for the same unit. 
+
+So the variance of Neyman's estimator /tau_hat is usually upward biased, leading to overly conservative confidence intervals for /tau_hat. If we allow for heterogeneous treatment effect, then this bias disappears if we assume the sample as a random sample from an infinite population. 
+
+(maybe mention something about CLT ? and large sample approximation? - Athey and Imbens mention that large-sample approximation is not needed)
+
+*/
 
 
 ***********    b    ***********
+/*Describe Fisher's inference and replicate section 4.1 of Athey and Imbens (2017) in Stata. Do you arrive at their same p-value? If not, why? Hint: Note that you can draw motivation from third-parties for your own answer; for this case, we suggest that you read Hess (2017).*/
 
-
-***********    c    ***********
-
-
-use jtrain2.dta, clear
+se jtrain2.dta, clear
 
 reg re78 train, robust
 scalar myb = _b[train]
@@ -407,6 +420,38 @@ forvalues i=1(1)100000 {
 
 qui scalar p_value = conta/100000
 scalar list p_value
-	
-	
-}
+
+
+* Alternative way, using the permute function in Hess (2017). 
+permute train _b[train], reps(10000) seed(0): /// 
+	regress re78 train, vce(robust)
+// It gives back the same p value!!!!!
+
+
+
+/*
+Fisherian inference of completely randomised experiments consists in assessing the sharp null hypothesis of no effect of the treatment versus the control group (Imbens and Rubin, 2015). In particular, Fisher's null hypothesis can be written as: 
+
+H0: Y_i(0) = Y_(1) for each unit of the experiment
+
+Under Fisher's null hypothesis, and under sharp null hypotheses more generally, for units with either potential outcome observed, the other potential outcome is known; and so, under such a sharp null hypothesis, both potential outcomes are "known" for each unit in the sample being either directly observed or inferred through the sharp null hypothesis (Imbens and Rubin, 2015). 
+
+In practice what we would like to test through Fisher's inference is the hypothesis that the treatment effect is 0 for all units, and to do this we will reassign the treatment 10000 thousands times, keeping the number of treated and control equal to the original experiment. We will store the value of the average treatment effect for each of the iterations and count how many times over the iterations the coefficient obtained (i.e., the simple difference in average post treatment earnings between treated and control group) is equal or above 1.79. The number of iterations in which the coefficient is higher than 1.79 over the total number of iterations will tell us the p-value of the test:
+H0: Y_i(0) = Y_(1) for each unit of the experiment
+H1: Y_i(0) =! Y_(1) for each unit of the experiment
+As in every other experiment, low values of the p-value indicate that we can reject the null hypothesis, which in this case is of non-existence of a treatment effect. 
+
+*/
+
+***********    c    ***********
+
+/* (c) Read again the randomization plan in LaLonde (1986). On which grounds Athey and Imbens (2017)'s illustration of Fisherian inference on LaLonde (1986)'s paper could be criticized?
+*/
+
+/*
+Looking at the randomisation plan in LaLone (1986) we can see that the randomisation was stratified at the city level. Stratifiying at some level the randomisation, allows to... 
+
+
+
+
+*/
