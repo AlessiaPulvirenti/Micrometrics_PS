@@ -160,7 +160,9 @@ use jtrain3.dta, clear
 ***********    a    ***********
 
 local control_vars age educ black hisp re75 re74 
-balancetable train `control_vars' using TABLE_1.xls, ctitle("Mean C" "Mean T" "Diff. t-test") vce(robust)  leftctitle("Variable") varnames modify cell(A11)	wide	
+balancetable train `control_vars' using TABLE_1.xls, ctitle("Mean C" "Mean T" "Diff. t-test") vce(robust)  leftctitle("Variable") varnames modify cell(A11)	wide
+
+* Alternative construction of balance table using the matrix command	
 
 /*
 matrix balance2 = (.,.,.,.,.,.,.,.)
@@ -244,7 +246,9 @@ replace treated = 1 if index > cutoff & index<=cutoff*2
 ***********    c    ***********
 
 
-randtreat, generate(treated_2) setseed(88888)
+randtreat, generate(treated_2) setseed(88888) 
+
+* @Tommi: here we added the setseed option with the same seed as in point b.
 
 pwcorr treated treated_2, sig star(.05)
 
@@ -254,6 +258,8 @@ pwcorr treated treated_2, sig star(.05)
 local control_vars age educ black hisp re75 re74 
 balancetable treated `control_vars' using TABLE_1_Ale.xls, ctitle("Mean C" "Mean T" "Diff. t-test") vce(robust)  leftctitle("Variable") varnames modify cell(H11) wide		
 
+
+* Alternative construction of balance table using the matrix command
 
 /*
 matrix balance3 = (.,.,.,.,.,.,.,.)
@@ -311,7 +317,6 @@ putexcel T9 = N_t
 quietly sum age if train == 0, d
 scalar N_c = r(N)
 putexcel U9 = N_c
-
 
 */
 
