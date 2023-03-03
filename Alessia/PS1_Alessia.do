@@ -254,6 +254,8 @@ ritest train _b[train], reps(10000) seed(12345): ///
 	regress re78 train, vce(robust)
 
 
+	
+	
 * Now, we regress the outcome variable on the newly created treatment variable
 reg re78 treated_3
 
@@ -273,9 +275,6 @@ In practice what we would like to test through Fisher's inference is the hypothe
 H0: Y_i(0) = Y_(1) for each unit of the experiment
 H1: Y_i(0) =! Y_(1) for each unit of the experiment
 As in every other experiment, low values of the p-value indicate that we can reject the null hypothesis, which in this case is of non-existence of a treatment effect. 
-
-In our iteration, we obtain a slightly different p-value than the one obtained by Athey and Imbens (2017). One of the reasons could be the fact that our reassignment of the treatment, through the function randtreat leads to 178 individuals in the Control group and 267 individuals in the Treatment group, rather than the desired randomisation into 180 vs 265. 
-
 
 
 
