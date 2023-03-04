@@ -383,6 +383,7 @@ However, Imbens and Rubin 2015, show that the sampling variance of the estimator
 3. the population variance of the unit level treatment effect, i.e., the pop variance of Y_i(1) - Y_i(0), over the whole sample. We know that this term is unobservable, because we never observe Y_i(1) and Y_i(0) for the same unit. 
 
 So the variance of Neyman's estimator /tau_hat is usually upward biased, leading to overly conservative confidence intervals for /tau_hat. If we allow for heterogeneous treatment effect, then this bias disappears if we assume the sample as a random sample from an infinite population. 
+//(maybe add: In this case, unbiasedness results from assuming the sample is a random sample from an infinite population, implying the estimator of the variance of Neyman's estimator is an estimator of the population rather than sample average treatment effect)
 
 (maybe mention something about CLT ? and large sample approximation? - Athey and Imbens mention that large-sample approximation is not needed)
 
@@ -444,6 +445,8 @@ As in every other experiment, low values of the p-value indicate that we can rej
 
 In our case, we obtain a p-value of 0.0044, similar to the result of Athey and Imbens. The slight difference could be due to...
 
+
+
 */
 
 ***********    c    ***********
@@ -452,9 +455,8 @@ In our case, we obtain a p-value of 0.0044, similar to the result of Athey and I
 */
 
 /*
-Looking at the randomisation plan in LaLone (1986) we can see that the randomisation was stratified at the city level. Stratifiying at some level the randomisation, allows to... 
+Looking at the randomisation plan in LaLonde (1986) we can see that the randomisation was stratified at the city level. Stratifiying at some level the randomisation, allows to
 
-
-
+Not stratifying by city implies that if more individuals from higher average earning cities are re-assigned to the treatment with respect to the initial assignment, the estimated average differences will be higher, and therefore also the probability of rejecting the null hypothesis (Type I error).
 
 */
