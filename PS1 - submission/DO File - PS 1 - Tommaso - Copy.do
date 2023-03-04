@@ -1,13 +1,15 @@
-											*******************************
-											***							***
-											***		Problem Set 1		***
-											***		GROUP 8				***
-											***		Aleksa Mitrovic		***
-											***		Elena Neri			***
-											***		Alessia Pulvirenti	***
-											***		Tommaso Roccuzzo	***
-											***							***
-											*******************************
+											***********************************
+											***								***
+											***		  Problem Set 1			***
+											***								***
+											***			GROUP 8				***	
+											***								***
+											***		Aleksa Mitrovic			***
+											***		Elena Neri				***
+											***		Alessia Pulvirenti		***
+											***		Tommaso Roccuzzo		***
+											***								***
+											***********************************
 											
 											
 cd "/Users/tommasoroccuzzo/Library/Mobile Documents/com~apple~CloudDocs/Tommaso/Appunti/Bocconi/2021-2022/2° Semestre/Microeconometrics/Problem Sets/PS 1"
@@ -74,7 +76,7 @@ matrix colnames balance = mean_T mean_C StdDev_T StdDev_C Diff StdE_Diff t-stat 
 
 matrix list balance
 
-putexcel set TABLE_1_ok.xls, replace
+putexcel set TABLE_1.xls, replace
 
 putexcel A1=matrix(balance), hcenter names
 putexcel A9 = "Observations"
@@ -208,7 +210,7 @@ matrix bot = balance2[5..6,1..8]
 matrix list bot
 
 
-putexcel set TABLE_1_ok.xls, modify
+putexcel set TABLE_1.xls, modify
 putexcel K1=matrix(top), hcenter colnames
 putexcel K7=matrix(bot), hcenter
 
@@ -306,7 +308,7 @@ matrix bot = balance3[5..6,1..8]
 matrix list bot
 
 
-putexcel set TABLE_1_ok.xls, modify
+putexcel set TABLE_1.xls, modify
 putexcel T1=matrix(top), hcenter colnames
 putexcel T7=matrix(bot), hcenter
 
@@ -425,8 +427,7 @@ scalar list p_value
 * Alternative way, using the permute function in Hess (2017). 
 permute train _b[train], reps(10000) seed(0): /// 
 	regress re78 train, vce(robust)
-// It gives back the same p value!!!!!
-
+// Looking at the two sided p-value (because the alternative hypothesis is just that the treatment effect is different from 0, we reach the same p-value as with the loop procedure, i.e., 0.0044, which, net of rounding is very similar to the conclusion reached by Athey and Imbens)
 
 
 /*
@@ -440,6 +441,8 @@ In practice what we would like to test through Fisher's inference is the hypothe
 H0: Y_i(0) = Y_(1) for each unit of the experiment
 H1: Y_i(0) =! Y_(1) for each unit of the experiment
 As in every other experiment, low values of the p-value indicate that we can reject the null hypothesis, which in this case is of non-existence of a treatment effect. 
+
+In our case, we obtain a p-value of 0.0044, similar to the result of Athey and Imbens. The slight difference could be due to...
 
 */
 
