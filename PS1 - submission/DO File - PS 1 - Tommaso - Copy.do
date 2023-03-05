@@ -90,6 +90,9 @@ putexcel C9 = N_c
 */
 
 
+* Comment *
+* We expect and find some imbalances, as we are working with subsets of the the original treatment and control groups of the experimental data used by LaLonde. Two variables are unbalanced: "nodegree", with the difference between treatment and control significant at confidence levels of 1%,5% and 10%, and "hisp", with the difference significant only at the 10% confidence level. The sizable imbalance in "nodegree" is most likely caused by the nature of the treatment, which specifically targeted, among the 4 different groups, young school drpouts. All other variables are balanced. *
+
 
 
 ***********    b    ***********
@@ -111,6 +114,10 @@ di train_se
 .63285355
 */
 
+
+* Comment *
+* The coefficient captures the difference in observed mean values between the treatment and the control group for the dependent variable "re78". It means that receiving the treatment increased "re78" by circa 1.79, i.e., real annual earnings in the treated group increased on average by almost $1800. *
+
 ***********    c    ***********
 
 
@@ -131,6 +138,11 @@ scalar N_T = r(N)
 outreg2 [Regression_1 Regression_2 Regression_3] using TABLE_2.xls, nocons adds(# of units in Treatment, N_T, # of units in Control, N_C) excel replace ctitle("") 
 
 
+* Comment *
+* The coefficient on "train" is positive and significant at 1% in the first regression. When we introduce the first covariates "age" "educ" "black" "hisp" it decreases slightly and becomes significant at 5%. This is not affected by the introudction of "re74" and "re75". 
+* The coefficient for "black" is negative and the one for "educ" is positive, and both are significant at 5% in the second regression. In the third regression their size is not affected by the introduction of the two new covariates, and the one for "educ" becomes significant at 1%. 
+* Thus, results are thus quite robust to the introduction of covariates. 
+*
 ***********    d    ***********
 
 
