@@ -11,17 +11,14 @@
 					***								***
 					***********************************
 											
-											
-cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\Micrometrics_PS\PS1 - submission"
 
-clear
+clear all
 
 
 ************************************************	QUESTION 1 		************************************************
 
 quietly{
 
-cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\Micrometrics_PS\PS1 - submission"
 use jtrain2.dta
 
 ***********    a    ***********
@@ -93,24 +90,26 @@ putexcel C9 = N_c
 /* We expect and find some imbalances, as we are working with subsets of the the original treatment and control groups of the experimental data used by LaLonde. Two variables are unbalanced: "nodegree", with the difference between treatment and control significant at 1%, and "hisp", with the difference significant only at the 10% (this can be seen by plotting the balance table with the matrix function). The sizable imbalance in "nodegree" is most likely caused by the nature of the treatment, which specifically targeted, among the 4 different groups, young school dropouts. All other variables are balanced.
 */
 
+
+*Reason why we will use vce(robust) throughout the whole do file* 
 /* 
+
+qui reg re78 train
 estat hettest
 
 Breusch–Pagan/Cook–Weisberg test for heteroskedasticity 
 Assumption: Normal error terms
-Variable: Fitted values of re74
+Variable: Fitted values of re78
 
 H0: Constant variance
 
-    chi2(1) =   4.71
-Prob > chi2 = 0.0299
+    chi2(1) =  29.07
+Prob > chi2 = 0.0000
+
+Performing the Breusch–Pagan we find evidence of heteroskedasticity in the data (we reject the null hypothesis of homoskedasticity at a 1% level of significance). 
+To correct for heteroskedasticity and to obtain robust standards errors, we include the "vce(robust)" option in all regressions and when constructing balance tables (with the exception of the regressions in point 1 (d), which cannot include the "vce(robust)" option to correctly adopt the postestimation command "dfbeta" computing the influence statistic ("DFBETA")).
 */
 
-
-* Comment *
-/* Performing the Breusch–Pagan we find evidence of heteroskedasticity in the data (we reject the null hypothesis of homoskedasticity at a 5% level of significance). 
-To correct for heteroskedasticity and to obtain robust standards errors, we include the "vce(robust)" option in all regressions and when constructing balance tables (with the exception of the regressions in point 1 (d), which cannot include the "vce(robust)" option to correctly adopt the postestimation command "dfbeta" computing the influence statistic ("DFBETA")). 
-*/
 
 
 
