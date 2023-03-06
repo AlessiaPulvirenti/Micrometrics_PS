@@ -12,7 +12,7 @@
 					***********************************
 											
 											
-cd "/Users/tommasoroccuzzo/Library/Mobile Documents/com~apple~CloudDocs/Tommaso/Appunti/Bocconi/2021-2022/2° Semestre/Microeconometrics/Problem Sets/PS 1"
+cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\Micrometrics_PS\PS1 - submission"
 
 clear
 
@@ -21,7 +21,7 @@ clear
 
 quietly{
 
-cd "C:\Users\pulvi\OneDrive - Università Commerciale Luigi Bocconi\Depr(ESS)ion\Second Year\Micrometrics\PS\Micrometrics_PS\PS1 - submission"
+cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\Micrometrics_PS\PS1 - submission"
 use jtrain2.dta
 
 ***********    a    ***********
@@ -32,8 +32,6 @@ help balancetable
 
 local control_vars age educ black hisp nodegree re75 re74 
 balancetable train `control_vars' using TABLE_1.xls, ctitle("Mean C" "Sd C" "Mean T" " Sd T" "Diff. in means" "Sd Error") vce(robust)  leftctitle("Variable") varnames wide replace		
-
-
 
 
 * Alternative method, using the matrix function
@@ -93,6 +91,25 @@ putexcel C9 = N_c
 
 * Comment *
 /* We expect and find some imbalances, as we are working with subsets of the the original treatment and control groups of the experimental data used by LaLonde. Two variables are unbalanced: "nodegree", with the difference between treatment and control significant at 1% and "hisp", with the difference significant only at the 10% (this can be seen by plotting the balance table with the matrix function). The sizable imbalance in "nodegree" is most likely caused by the nature of the treatment, which specifically targeted, among the 4 different groups, young school dropouts. All other variables are balanced.
+*/
+
+/* 
+estat hettest
+
+Breusch–Pagan/Cook–Weisberg test for heteroskedasticity 
+Assumption: Normal error terms
+Variable: Fitted values of re74
+
+H0: Constant variance
+
+    chi2(1) =   4.71
+Prob > chi2 = 0.0299
+*/
+
+
+* Comment *
+/* Performing the Breusch–Pagan we find evidence of heteroskedasticity in the data (we reject the null hypothesis of homoskedasticity at a 5% level of significance). 
+To correct for heteroskedasticity and to obtain robust standards errors, we include the "vce(robust)" option in all regressions and when constructing balance tables (with the exception of the regressions in point 1 (d), which cannot include the "vce(robust)" option to correctly adopt the postestimation command "dfbeta" computing the influence statistic ("DFBETA")). 
 */
 
 
@@ -169,8 +186,15 @@ reg re78 `x_1' if influence_train > influence_train[10] & influence_train < infl
 /*
 Out reasults are sensitive to influencial observations, especially concerning the variable train. First of all, looking at the significance of the coefficient, we notice that as we remove the 3, 5, 10 lowest and largest values in the dfbeta of train, the p-value starts to increase, to 0.009, 0.015 and  0.029, losing the significance at 1% of the coefficient in the regressions where we remove the 5 and 10 obs with the lowest and largest value of the dfbeta of train. 
 
-Focusing on the magnitude of the coefficient of train (i.e., the treatment effect), we can see that the coefficient of train drops from 1.68 to  1.36 when removing the 3 lowest and largest values of influence_train, representing a substantial fall in the magnitude of the treatment variable. Furthermore, the coefficient drops all the way down to 1.02 in the third regression, when removing the 10 lowest and largest values of influence_train. This proves that our results are sensitive to influencial observations. 
+Focusing on the magnitude of the coefficient of train (i.e., the treatment effect), we can see that the coefficient of train drops from 1.68 to 1.36 when removing the 3 lowest and largest values of influence_train, representing a substantial fall in the magnitude of the treatment variable. Furthermore, the coefficient drops all the way down to 1.02 in the third regression, when removing the 10 lowest and largest values of influence_train. This proves that our results are sensitive to influencial observations. 
+*/ 
 
+/*
+local x_1 "train age educ black hisp re74 re75"
+reg re78 `x_1', vce(robust)
+
+*Comment*
+If we re-run the regression with the option "vce(robust)" we find that the magnitude of the estimates is unchanged, we only find slightly higher standard errors (i.e., for the treatment variable train, .6565083 > .6308616).
 */
 
 
@@ -381,7 +405,7 @@ scalar N_T = r(N)
 outreg2 [Regression_4 Regression_5 Regression_6] using TABLE_2.xls, nocons adds(# of units in Treatment, N_T, # of units in Control, N_C) excel append
 
 /*
-The variable treatment is the result of a random riassignment of the treatment status to the sample. As a consequence, we find that it is never significant in explaining changes in earnings in 1978. Moreover, we notice that, as we exclude the true treatment variable, other covariates which were not significant before (e.g., age and earnings in the previous years), become significant. 
+The variable treated is the result of a random re-assignment of the treatment status to the sample. As a consequence, we find that it is never significant in explaining changes in earnings in 1978. Moreover, we notice that, as we exclude the true treatment variable (train), other covariates which were not significant before (e.g., age and earnings in the previous years), become significant. 
 */
 
 
@@ -407,7 +431,7 @@ outreg2 [Regression_7 Regression_8 Regression_9] using TABLE_2.xls, nocons adds(
 }
 
 /*
-The last three regressions show very different results. In particular, the coefficient of the treatment variable, train, shows negative values in the first two regressions, and a positive - but not significant - in the last one. This is mostly due to the nature of the dataset. In fact, jtrain.3, as opposed to jtrain.2, is composed of 185 observations coming from treated individuals in the experiment but also of 2490 observations coming from observational data which are used as control group. As a consequence, the negative coefficient for train might be due to the fact that the observations used as control group in this case do not represent a "good" control group, as treatment assignment is not as-good-as random. In other words, the two (unbalanced) groups do not only differ for the treatment status, but also for are individual characteristics that affect the change in earnings in 1978.
+The last three regressions show very different results. In particular, the coefficient of the treatment variable, train, shows negative values in the first two regressions, and a positive - but not significant - in the last one. This is mostly due to the nature of the dataset. In fact, jtrain.3, as opposed to jtrain.2, is composed of 185 observations coming from treated individuals in the experiment but also of 2490 observations coming from observational data which are used as control group. As a consequence, the negative coefficient for train might be due to the fact that the observations used as control group in this case do not represent a "good" control group, as treatment assignment is not as-good-as random. In other words, the two (unbalanced) groups do not only differ for the treatment status, but also by individual characteristics that affect the change in earnings in 1978.
 
 This can be explained also by looking at the fact that, when adding the controls, the sign of train reverses becoming positive, although it loses its significance. Controlling for individual characteristics thus allows us to compare two groups which are more similar (and that clearly do not differ only for the treatment assignment).
 */
