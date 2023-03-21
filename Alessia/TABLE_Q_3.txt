@@ -1,6 +1,6 @@
 OLS and IV				
 	(1)	(2)	(3)	(4)
-VARIABLES	OLS	First Stage	Reduced Form	Second Stage
+VARIABLES	Healthy	Education	Healthy	Healthy
 				
 Quarter1		-0.165***	-0.00177***	
 		(0.0138)	(0.000537)	
@@ -13,8 +13,9 @@ Education	0.00459***			0.0122***
 				
 Observations	496,790	496,790	496,790	496,790
 R-squared	0.031		0.018	-0.007
-Controls	YES	YES		YES
-Year of Birth FEs	YES	YES		YES
-F-statistic IVs		61.05	61.05	
+Controls	YES	YES	YES	YES
+Year of Birth FEs	YES	YES	YES	YES
+Regression	OLS	First Stage	Reduced Form	Second Stage
+F-statistic IVs		61.05		
 Standard errors in parentheses				
 *** p<0.01, ** p<0.05, * p<0.1				
