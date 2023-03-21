@@ -1,15 +1,15 @@
-					***********************************
-					***								***
-					***		  Problem Set 1			***
-					***								***
-					***			GROUP 8				***	
-					***								***
-					***		Aleksa Mitrovic			***
-					***		Elena Neri				***
-					***		Alessia Pulvirenti		***
-					***		Tommaso Roccuzzo		***
-					***								***
-					***********************************
+					*******************************************
+					***										***
+					***		  Problem Set 1					***
+					***										***
+					***			GROUP 8						***	
+					***										***
+					***		Aleksa Mitrovic		3100079		***
+					***		Elena Neri			3070190		***
+					***		Alessia Pulvirenti	3060894		***
+					***		Tommaso Roccuzzo	3080613		***
+					***										***
+					*******************************************
 											
 
 clear all
@@ -179,7 +179,7 @@ reg re78 `x_1' if influence_train > influence_train[3] & influence_train < influ
 reg re78 `x_1' if influence_train > influence_train[5] & influence_train < influence_train[441] 
 reg re78 `x_1' if influence_train > influence_train[10] & influence_train < influence_train[436] 
 
-}
+
 
 *Comment*
 /*
@@ -193,9 +193,9 @@ local x_1 "train age educ black hisp re74 re75"
 reg re78 `x_1', vce(robust)
 
 *Comment*
-If we re-run the regression with the option "vce(robust)" we find that the magnitude of the estimates is unchanged, we only find slightly higher standard errors (i.e., for the treatment variable train, .6565083 > .6308616).
+If we re-run the regression with the option "vce(robust)" we find, as expected, that the magnitude of the estimates is unchanged, we only find slightly higher standard errors (i.e., for the treatment variable train, .6565083 > .6308616).
 */
-
+}
 
 ************************************************	QUESTION 2 		************************************************
 
@@ -427,7 +427,6 @@ scalar N_T = r(N)
 
 outreg2 [Regression_7 Regression_8 Regression_9] using TABLE_2.xls, nocons adds(# of units in Treatment, N_T, # of units in Control, N_C) excel append
 	
-}
 
 /*
 The last three regressions show very different results. In particular, the coefficient of the treatment variable, "train", shows negative values in the first two regressions, and a positive - but not significant - in the last one. This is mostly due to the nature of the dataset. In fact, jtrain.3, as opposed to jtrain.2, is composed of 185 observations coming from treated individuals in the experiment but also of 2490 observations coming from observational data which are used as control group. As a consequence, the negative coefficient for "train" might be due to the fact that the observations used as control group in this case do not represent a "good" control group, as treatment assignment is not as-good-as random. In other words, the two (unbalanced) groups do not only differ for the treatment status, but also by individual characteristics that affect the change in earnings in 1978.
@@ -435,6 +434,7 @@ The last three regressions show very different results. In particular, the coeff
 This can be explained also by looking at the fact that, when adding the controls, the sign of "train" reverses becoming positive, although it loses its significance. Controlling for individual characteristics thus allows us to compare two groups which are more similar (and that clearly do not differ only for the treatment assignment).
 */
 
+}
 ************************************************	QUESTION 3 		************************************************
 
 quietly{
@@ -494,12 +494,6 @@ qui scalar p_value = conta/100000
 scalar list p_value
 
 
-* Alternative way, using the permute function in Hess (2017). 
-permute train _b[train], reps(10000) seed(12345): /// 
-	regress re78 train, vce(robust)
-// Looking at the two sided p-value - since the alternative hypothesis is just that the treatment effect is different from 0 - we reach the same p-value as with the loop procedure, i.e., 0.0044, which, net of rounding is very similar to the conclusion reached by Athey and Imbens)
-
-
 /*
 Fisherian inference of completely randomised experiments consists in assessing the sharp null hypothesis of no effect of the treatment versus the control group (Imbens and Rubin, 2015). In particular, Fisher's null hypothesis can be written as: 
 
@@ -513,8 +507,7 @@ H1: Y_i(0) =! Y_(1) for each unit of the experiment
 As in every other experiment, low values of the p-value indicate that we can reject the null hypothesis, which in this case is of non-existence of a treatment effect. 
 
 
-In our case, we have produced a loop in which 100,000 iterations produce a p-value very similar to that found by Athey and Imbens (0.0041). This means that in our case, we have that in 100,000 iterations, the difference between the sample averages is greater or equal than 1.79 in absolute value only about 410 times. The slight difference might be due to the fact that Athey and Imbens are considering a sample of 185 treated and 240 control, while we have 260 units in the control group. Moreover our procedure is stochastic in finite (small) sample sizes, so it is reasonable to expect minor variarions in the estimated values. 
-
+In our case, we have produced a loop in which 100,000 iterations produce a p-value very similar to that found by Athey and Imbens (~ 0.0041). This means that in our case, we have that in 100,000 iterations, the difference between the sample averages is greater or equal than 1.79 in absolute value only about 410 times. The slight difference might be due to the fact that Athey and Imbens are considering a sample of 185 treated and 240 control, while we have 260 units in the control group. Moreover our procedure is stochastic in finite (small) sample sizes, so it is reasonable to expect minor variarions in the estimated values. 
 
 */
 
@@ -528,6 +521,7 @@ Looking at the randomisation plan in LaLonde (1986) we can see that the randomis
 
 In the Fisherian's inference proposed by Athey and Imbens (2017), the treatment is re-assigned randomly without considering the stratification included in the design of the experiment. 
 
-In order to perform a correct re-randomisation, we would need to know the strata used in the first design of the experiment, and the command ritest proposed by Hess (2017) and its option strata() will allow to take into account the different strat, which then would need to be included also in the regression as strata fixed effects. 
+In order to perform a correct re-randomisation, we would need to know the strata used in the first design of the experiment, and the command ritest proposed by Hess (2017) and its option strata() will allow to take into account the different strata, which then would need to be included also in the regression as strata fixed effects. 
 
 */
+}
