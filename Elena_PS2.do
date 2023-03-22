@@ -1,4 +1,4 @@
-cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\PS\problem set 2\exercise_1"
+cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\Micrometrics_PS"
 use pset_2_q_2_and_3.dta, clear
 
 *3(a) - OLS
@@ -37,6 +37,8 @@ outreg2 using TABLE_Q_3.xls, excel append ///
 keep(Quarter1 Quarter2 Quarter3) nocons ///
 addtext(Controls, YES, Reg, Reduced Form) 
 
+///ADD COMMENTS LINKED TO THE RESULTS IN 2(e)
+
 
 *3(d) - SECOND STAGE
 * Estimate the second stage.
@@ -52,7 +54,7 @@ addtext(Controls, YES, Reg, IV)
 *3(e) - ADD COMMENTS
 
 
-*3(f) - 
+*3(f) 
 
 
 tab bpl, gen(State)
@@ -71,14 +73,28 @@ local Year_Quarter_FEs "Year_quarter1-Year_quarter39"
 local Controls "Central Married Region*"
 local Birth_Year_FEs "Birth*"
 ivreg2 Healthy (Education = `Year_Quarter_FEs') ///
-`Controls' `Birth_Year_FEs', robust partial(`Birth_Year_FEs')
+`Controls' `Birth_Year_FEs', robust
+scalar F_test_Year_Quarter = e(widstat)
 
 local State_Quarter_FEs "State_quarter1-State_quarter203"
 local Controls "Central Married Region*"
 local Birth_Year_FEs "Birth*"
 local State_FEs "State1-State50"
 ivreg2 Healthy (Education = `State_Quarter_FEs') ///
-`Controls' `Birth_Year_FEs' `State_FEs', robust partial(`Birth_Year_FEs' `State_FEs')
+`Controls' `Birth_Year_FEs' `State_FEs', robust 
+scalar F_test_State_Quarter = e(widstat)
+
+*3(h)
+display F_test_Year_Quarter 
+*7.9607721
+
+display F_test_State_Quarter
+*3.1663298
+
+
+
+
+
 
 
 
