@@ -13,13 +13,14 @@
 											
 
 clear all
-
+cd "C:\Users\aleks\OneDrive\Desktop\mikroekonometrija\ps\Micrometrics_PS\PS1 - submission"
 
 ************************************************	QUESTION 1 		************************************************
 
 quietly{
 
 use jtrain2.dta
+describe
 
 ***********    a    ***********
 
