@@ -194,14 +194,13 @@ So, the model allows for heterogeneous effect on employment across location, wit
 
 set matsize 2000
 
-
 /*** AKM ADH Data **/
 insheet using "ADHdata_AKM.csv", clear
 gen year = 1990 + (t2=="TRUE")*10
 drop t2
 
 /*** BHJ SHARES **/
-merge 1:m czone year using ../data/Lshares.dta, gen(merge_shares)
+merge 1:m czone year using "Lshares.dta", gen(merge_shares)
 /*** BHJ SHOCKS **/
 merge m:1 sic87dd year using "shocks.dta", gen(merge_shocks)
 
@@ -346,7 +345,7 @@ gen agg_indshare = indshare2 / alpha1
 gen agg_indshare_sd = indshare_sd2 / alpha1
 gen agg_g = G2 / alpha1
 rename ind sic
-merge 1:1 sic using "../data/sic_code_desc"
+merge 1:1 sic using "sic_code_desc.dta"
 rename sic ind
 keep if _merge == 3
 gen ind_name = subinstr(description, "Not Elsewhere Classified", "NEC", .)
@@ -354,18 +353,143 @@ replace ind_name = subinstr(ind_name, ", Except Dolls and Bicycles", "", .)
 
 gsort -alpha1
 
+* (a) Plot the distribution of Rotemberg weights associated to Autor et al. (2013) in a parametric and a non-parametric manner (overlay both graphs in a single plot).
+hist alpha1, normal xtitle("Rotemberg Weights")
+graph export "FigureA1.png", replace
+
+*(b) Compile a LATEX table with 2 panels: panel A, identical to panel E in table A1 of Goldsmith-Pinkham et al. (2020); panel B, inspired in panel D of table A1 - the rows of the table should include those industries belonging to the top 5 industries in terms of Rotemberg weights; the columns should include information about: (i) /alpha_k, (ii) gk, (iii) /beta_k, (iv) 95% CIs, (v) Ind. Share and (vi) Share of overall /beta.
+
+gen omega = alpha1*agg_beta
+total omega
+mat b = e(b)
+local b = b[1,1]
+
+gen label_var = ind 
+gen beta_lab = string(agg_beta, "%9.3f")
+
+
+gen abs_alpha = abs(alpha1) 
+gen positive_weight = alpha1 > 0
+gen agg_beta_pos = agg_beta if positive_weight == 1
+gen agg_beta_neg = agg_beta if positive_weight == 0
+
+/** Panel A:  Weighted Betas by alpha weights **/
+preserve
+	gen agg_beta_weight = agg_beta * alpha1
+
+	collapse (sum) agg_beta_weight alpha1 (mean)  agg_beta, by(positive_weight)
+	egen total_agg_beta = total(agg_beta_weight)
+	gen share = agg_beta_weight / total_agg_beta
+	gsort -positive_weight
+	local agg_beta_pos = string(agg_beta_weight[1], "%9.3f")
+	local agg_beta_neg = string(agg_beta_weight[2], "%9.3f")
+	local agg_beta_pos2 = string(agg_beta[1], "%9.3f")
+	local agg_beta_neg2 = string(agg_beta[2], "%9.3f")
+	local agg_beta_pos_share = string(share[1], "%9.3f")
+	local agg_beta_neg_share = string(share[2], "%9.3f")
+restore
+
+/** Panel B:  Weighted Betas by alpha weights **/
+
+
+gen agg_beta_weight = agg_beta * alpha1
+egen total_agg_beta = total(agg_beta_weight)
+gen beta_share = agg_beta_weight / total_agg_beta
+
+
+foreach ind in 3571 3944 3651 3661 3577 {
+	
+	*Mean of the alpha for a given Industry
+	qui sum alpha1 if ind == `ind'
+    local alpha_`ind' = string(r(mean), "%9.3f")
+	*Mean of g for a given Industry
+	qui sum agg_g if ind == `ind'	
+	local g_`ind' = string(r(mean), "%9.3f")
+	*Mean of beta for a given Industry
+	qui sum agg_beta if ind == `ind'	
+	local beta_`ind' = string(r(mean), "%9.3f")
+	*Industry Share
+	qui sum agg_indshare if ind == `ind'
+	local share_`ind' = string(r(mean)*100, "%9.3f")
+	*Beta Share
+	qui sum beta_share if ind == `ind'
+	local beta_share_`ind' = string(r(mean)*100, "%9.3f")
+	* Save the name of the Industry
+	tempvar temp
+	qui gen `temp' = ind == `ind'
+	gsort -`temp'
+	local ind_name_`ind' = ind_name[1]
+	drop `temp'
+	}
+
+/*** Create final table **/
+
+capture file close fh
+file open fh  using "ex_2_table.tex", write replace
+file write fh "\begin{table}[]" _n
+file write fh "\centeringe" _n
+
+file write fh "\begin{tabular}{lllllll}" _n
+
+/** Panel A **/
+file write fh "\multicolumn{5}{l}{\textbf{Panel A: Estimates of $\beta_{k}$ for positive and negative weights} }\\" _n
+file write fh  " &  &  &  & \multicolumn{1}{c}{$\alpha$-weighted Sum} & \multicolumn{1}{c}{Share of overall $\beta$} & \multicolumn{1}{c}{Mean} \\ \cline{5-7} " _n
+file write fh  "Negative &  &  &  & `agg_beta_neg' & `agg_beta_neg_share'  & `agg_beta_neg2' \\" _n
+file write fh  "Positive &  &  &  & `agg_beta_pos' & `agg_beta_pos_share' & `agg_beta_pos2' \\" _n
 
 
 
+/** Panel B **/
+file write fh "\multicolumn{7}{l}{\textbf{Panel B: Top 5 Rotemberg weight industries}} \\" _n
+file write fh  " & \multicolumn{1}{c}{$\hat{\alpha}_{k}$} & \multicolumn{1}{c}{$ g_{k}$} & \multicolumn{1}{c}{$\hat{\beta}_{k}$} & \multicolumn{1}{c}{95 \% CI} & \multicolumn{1}{c}{Ind Share} & \multicolumn{1}{c}{Share of overall $\beta$ \%} \\ \cline{2-7} " _n
+foreach ind in 3571 3944 3651 3661 3577 {
+	if `ci_min_`ind'' != -10 & `ci_max_`ind'' != 10 {
+		file write fh  "`ind_name_`ind'' & `alpha_`ind'' & `g_`ind'' & `beta_`ind'' & (`ci_min_`ind'',`ci_max_`ind'')  & `share_`ind'' & `beta_share_`ind''\\ " _n
+		}
+	else  {
+		file write fh  "`ind_name_`ind'' & `alpha_`ind'' & `g_`ind'' & `beta_`ind'' & \multicolumn{1}{c}{N/A}  & `share_`ind'' & `beta_share_`ind'' \\ " _n
+		}
+	}
+	
+	
+	
+	
+file write fh  "\end{tabular}" _n
+file write fh  "\end{table}" _n
+file close fh
+
+
+
+*(c) Replicate Figures A2 and A3 from Section A of Goldsmith-Pinkham et al. (2020). Having both these figures into account, which type of TE heterogeneity seems to be present in Autor et al. (2013)? Does it preclude you from interpreting the IV estimates present in the paper as a LATE?
+
+gen F = .
+gen agg_pi = .
+gen agg_gamma = .
+levelsof ind, local(industries)
+foreach ind in `industries' {
+	capture replace F = `F_`ind'' if ind == `ind'
+	capture replace agg_pi = `pi_`ind'' if ind == `ind'
+	capture replace agg_gamma = `gamma_`ind'' if ind == `ind'		
+	}
+
+twoway (scatter agg_beta_pos agg_beta_neg F if F >= 5 [aweight=abs_alpha ], msymbol(Oh Dh) ), legend(label(1 "Positive Weights") label( 2 "Negative Weights")) yline(`b', lcolor(black) lpattern(dash)) xtitle("First stage F-statistic")  ytitle("{&beta}{subscript:k} estimate")
+graph export "FigureA2.png", replace
+
+gsort -alpha1
+twoway (scatter F alpha1 if _n <= 5, mcolor(dblue) mlabel(ind_name  ) msize(0.5) mlabsize(2) ) (scatter F alpha1 if _n > 5, mcolor(dblue) msize(0.5) ), name(a, replace) xtitle("Rotemberg Weight") ytitle("First stage F-statistic") yline(10, lcolor(black) lpattern(dash)) legend(off)
+graph export "FigureA3.png", replace
+
+
+/*
+WRITE COMMENT HERE
+*/
 
 
 * QUESTION 3 
-/*
+*(a) State which are the identifying assumptions necessary for those IV estimates presented in Section V to be consistent. Discuss whether these assumptions are more or less plausible in this setting (relative to Autor et al., 2013).
 
 
 
-
-*/
 
 
 
