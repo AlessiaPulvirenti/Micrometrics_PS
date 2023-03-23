@@ -163,3 +163,211 @@ Can you say if both regressions are likely to suffer from finite sample bias?*/
 
 
 
+
+
+**# EXERCISE 2
+
+* QUESTION 1 
+
+
+*(a) Assume that import competition affects the rate of manufacturing employment homogeneously. State which identification assumptions must hold under this setting for those IV estimates presented in Autor et al. (2013) to be consistent.
+
+/* Autor et al. 2013 investigate the effects of increased import competition from China in the manufacturing sector on wages and employment in the US. However, the change in import competition from Chinese products (what can be called, the "China shock") in a specific industry could be correlated with import demand shocks in that industry, leading the OLS estimate to be biased if both US employment (the outcome variable) and imports may be positively correlated with unobserved demand shocks. Then, in order to identify the causal effect of rising Chinese import exposure on local labour market outcomes, they employ and IV approach that instruments US imports from China with other countries' imports from China, weighted by the portion of employment in that industry to the employment in all industries (the "share"). Moreover, to avoid reverse causality/contemporaneity bias, the auhors use the share of employment in each industry for every location measured in the previous 10 years. Given this setting, the main identification assumptions for the instrument to be valid are: 
+1) Relevance: changes in Chinese imports in other countries must be positively correlated with changes in imports from China in the US.
+2) Randomness: increase in imports in other countries should be independent of unobservable characteristics of local labour markets under investigation in the US (e.g., they should be exogenous to demand shocks in that industry)
+3) Exclusion restriction: changes in Chinese imports in other countries should affect local labour market outcomes in the US ONLY THROUGH the effect that the increase in Chinese imports in these countries has on increase in imports in US countries. This can be true if the the common within-industry component of rising Chinese imports to the US and other high-income countries stems only from China's rising comparative advantage and/or falling trade costs.
+
+Therefore, in the Bartik instrument jargoon, the identification assumptions set forth by Autor et al. (2013) are based on the exogeneity of the shocks. On the other hand, Goldsmith-Pinkham et al. (2020) base the consistency of the Bartik estimator (under the assumption of homogeneous effects) on the exogeneity of the shifts claiming that the Bartik instrument is equivalent to a GMM estimator composed of a matrix of weights (the Rotemberg weights) and as many instruments as the shares of employment in each location. Precisely because of this definition of the Bartik instrument,  Goldsmith-Pinkham et al. (2020) require the shares, rather than the shifts (shocks) to be strictly exogenous.
+*/
+
+*(b) Which additional assumptions would be necessary to hold if import competition would afffiect manufacturing employment difffierently, depending on a set of factors?
+
+/*
+Assuming the presence of heterogenous effects that vary across either location or time, Goldsmith-Pinkham et al. 2020 discuss the interpretation of heterogenous effect of the Bartik instrument. Because this instrument combines multiple unordered instruments, the authors provide a definition of restricted heterogeneity (a linear heterogeneity), as monotonicity is not sufficient. 
+So, the model allows for heterogeneous effect on employment across location, with constant effect within location. Goldsmith-Pinkham et al. 2020 provide a new specification with a coefficient that varies for each location (constant linear effects within a location). Then, the authors set forth the following assumptions to allow for the identification of the restricted-heterogeneous effect:
+1) Monotonicity-analogous assumption: 
+(i) for every industry, the coefficients of each industry-location specific first stage are all (weakly) of the same sign across all locations, an assumption which is very similar to the "standard" monotonicity assumption. 
+(ii) conditional on controls, the expectation of the product between the industry-location specific instrument, the error term of the FS and the location-specific treatment effect is equal to 0. 
+*/
+
+* QUESTION 2
+
+set matsize 2000
+
+
+/*** AKM ADH Data **/
+insheet using "ADHdata_AKM.csv", clear
+gen year = 1990 + (t2=="TRUE")*10
+drop t2
+
+/*** BHJ SHARES **/
+merge 1:m czone year using ../data/Lshares.dta, gen(merge_shares)
+/*** BHJ SHOCKS **/
+merge m:1 sic87dd year using "shocks.dta", gen(merge_shocks)
+
+rename ind_share share_emp_ind_bhj_
+gen z_ = share_emp_ind_bhj_ * g
+rename g g_
+drop g_emp_ind-g_importsUSA
+reshape wide share_emp_ind_bhj_ g z_, i(czone year) j(sic87dd)
+egen z = rowtotal(z_*)
+
+
+local controls reg_* l_sh_popedu_c l_sh_popfborn l_sh_empl_f l_sh_routine33 l_task_outsource l_shind_manuf_cbp t2
+local weight weight
+
+local y d_sh_empl_mfg 
+local x shock
+local z z
+
+
+local ind_stub share_emp_ind_bhj_
+local growth_stub g_
+
+local time_var year
+local cluster_var czone
+
+levelsof `time_var', local(years)
+
+/** g_2141 and g_3761 = 0 for all years **/
+drop g_2141 `ind_stub'2141
+drop g_3761 `ind_stub'3761
+
+forvalues t = 1990(10)2000 {
+	foreach var of varlist `ind_stub'* {
+		gen t`t'_`var' = (year == `t') * `var'
+		}
+	foreach var of varlist `growth_stub'* {
+		gen t`t'_`var'b = `var' if year == `t'
+		egen t`t'_`var' = max(t`t'_`var'b), by(czone)
+		drop t`t'_`var'b
+		}
+	}
+
+tab division, gen(reg_)
+drop reg_1
+tab year, gen(t)
+drop t1
+
+drop if czone == .
+
+foreach var of varlist `ind_stub'* {
+	if regexm("`var'", "`ind_stub'(.*)") {
+		local ind = regexs(1) 
+		}
+	tempvar temp
+	qui gen `temp' = `var' * `growth_stub'`ind'
+	qui regress `x' `temp' `controls' [aweight=`weight'], cluster(czone)
+	local pi_`ind' = _b[`temp']
+	qui test `temp'
+	local F_`ind' = r(F)
+	qui regress `y' `temp' `controls' [aweight=`weight'], cluster(czone)
+	local gamma_`ind' = _b[`temp']
+	drop `temp'
+	}
+
+foreach var of varlist `ind_stub'3571 `ind_stub'3944 `ind_stub'3651 `ind_stub'3661 `ind_stub'3577 {
+	if regexm("`var'", "`ind_stub'(.*)") {
+		local ind = regexs(1) 
+		}
+	tempvar temp
+	qui gen `temp' = `var' * `growth_stub'`ind'
+	ch_weak, p(.05) beta_range(-10(.1)10)   y(`y') x(`x') z(`temp') weight(`weight') controls(`controls') cluster(czone)
+	disp r(beta_min) ,  r(beta_max)
+	local ci_min_`ind' =string( r(beta_min), "%9.2f")
+	local ci_max_`ind' = string( r(beta_max), "%9.2f")
+	disp "`ind', `beta_`ind'', `t_`ind'', [`ci_min_`ind'', `ci_max_`ind'']"
+	drop `temp'
+	}
+
+
+preserve
+keep `ind_stub'* czone year `weight'
+reshape long `ind_stub', i(czone year) j(ind)
+gen `ind_stub'pop = `ind_stub'*`weight'
+collapse (sd) `ind_stub'sd = `ind_stub' (rawsum) `ind_stub'pop `weight' [aweight = `weight'], by(ind year)
+tempfile tmp
+save `tmp'
+restore
+
+bartik_weight, z(t*_`ind_stub'*)    weightstub(t*_`growth_stub'*) x(`x') y(`y') controls(`controls'  ) weight_var(`weight')
+
+mat beta = r(beta)
+mat alpha = r(alpha)
+mat gamma = r(gam)
+mat pi = r(pi)
+mat G = r(G)
+qui desc t*_`ind_stub'*, varlist
+local varlist = r(varlist)
+
+
+
+clear
+svmat beta
+svmat alpha
+svmat gamma
+svmat pi
+svmat G
+
+gen ind = ""
+gen year = ""
+local t = 1
+foreach var in `varlist' {
+	if regexm("`var'", "t(.*)_`ind_stub'(.*)") {
+		qui replace year = regexs(1) if _n == `t'
+		qui replace ind = regexs(2) if _n == `t'
+		}
+	local t = `t' + 1
+	}
+
+/** Calculate Panel C: Variation across years in alpha **/
+total alpha1 if year == "1990"
+mat b = e(b)
+local sum_1990_alpha = string(b[1,1], "%9.3f")
+total alpha1 if year == "2000"
+mat b = e(b)
+local sum_2000_alpha = string(b[1,1], "%9.3f")
+
+sum alpha1 if year == "1990"
+local mean_1990_alpha = string(r(mean), "%9.3f")
+sum alpha1 if year == "2000"
+local mean_2000_alpha = string(r(mean), "%9.3f")
+
+destring ind, replace
+destring year, replace
+merge 1:1 ind year using `tmp'
+gen beta2 = alpha1 * beta1
+gen indshare2 = alpha1 * (`ind_stub'pop/`weight')
+gen indshare_sd2 = alpha1 * `ind_stub'sd
+gen G2 = alpha1 * G1
+collapse (sum) alpha1 beta2 indshare2 indshare_sd2 G2 (mean) G1 , by(ind)
+gen agg_beta = beta2 / alpha1
+gen agg_indshare = indshare2 / alpha1
+gen agg_indshare_sd = indshare_sd2 / alpha1
+gen agg_g = G2 / alpha1
+rename ind sic
+merge 1:1 sic using "../data/sic_code_desc"
+rename sic ind
+keep if _merge == 3
+gen ind_name = subinstr(description, "Not Elsewhere Classified", "NEC", .)
+replace ind_name = subinstr(ind_name, ", Except Dolls and Bicycles", "", .)
+
+gsort -alpha1
+
+
+
+
+
+
+* QUESTION 3 
+/*
+
+
+
+
+*/
+
+
+
+
+
