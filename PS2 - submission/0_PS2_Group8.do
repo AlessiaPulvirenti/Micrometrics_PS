@@ -499,9 +499,6 @@ foreach ind in 3571 3944 3651 3661 3577 {
 		}
 	}
 	
-	
-	
-	
 file write fh  "\end{tabular}" _n
 file write fh  "\end{table}" _n
 file close fh
@@ -528,7 +525,7 @@ twoway (scatter F alpha1 if _n <= 5, mcolor(dblue) mlabel(ind_name  ) msize(0.5)
 graph export "FigureA3.png", replace
 
 
-*WRITE COMMENT HERE TO POINT (c)
+*ADD COMMENT HERE
 
 }
 

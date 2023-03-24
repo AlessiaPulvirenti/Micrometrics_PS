@@ -1,0 +1,15 @@
+	(1)	(2)	(3)	(4)	(5)	(6)
+VARIABLES	Healthy	Healthy	Healthy	Healthy	Healthy	Healthy
+						
+Education	0.00501***	0.00463***	0.00459***	0.0131***	0.0124***	0.0122***
+	(8.68e-05)	(8.38e-05)	(8.38e-05)	(0.00286)	(0.00281)	(0.00290)
+						
+Observations	496,790	496,790	496,790	496,790	496,790	496,790
+R-squared	0.017	0.031	0.031	-0.027	-0.009	-0.007
+Controls	NO	YES	YES	NO	YES	YES
+Birth Year FEs	NO	NO	YES	NO	NO	YES
+Mean y	0.982	0.982	0.982			
+Mean x	12.44	12.44	12.44			
+F-statistic IVs				21.05	338.6	195.1
+Robust standard errors in parentheses						
+*** p<0.01, ** p<0.05, * p<0.1						
