@@ -585,7 +585,9 @@ twoway (scatter F alpha1 if _n <= 5, mcolor(dblue) mlabel(ind_name  ) msize(0.5)
 graph export "FigureA3.png", replace
 
 
-*ADD COMMENT HERE
+*First of all, Goldsmith-Pinkham et al. 2020, note that The divergence between the two-step estimators (TSLS with Bartik, overidentified TSLS and MBTSLS) and the maximum likelihood estimators (LIML and HFUL) is evidence of misspecification. Similarly, the overidentification tests reject. However, the authors set forth also the hypothesis that this could be evidence of treatment effect heterogeneity. Indeed, looking at the two figures generated above, we can infer that there is heterogeneity in the treatment effect across industries. 
+
+*However, Goldsmith-Pinkham et al. (2020) have noted that although there is some degree of variability present, this type of heterogeneity is not considered a cause for concern. They found that high-powered industries show less dispersion in point estimates, and industries with higher weights are closely clustered around the overall point estimate. Therefore, although heterogeneity is present, it does not prevent us from interpreting the coefficient as a LATE. Additionally, it is important to investigate the presence of negative Rotemberg weights and their impact on the Bartik estimate. The authors have suggested that despite the existence of negative weights, they account for a relatively small portion of the overall weight.
 
 }
 
