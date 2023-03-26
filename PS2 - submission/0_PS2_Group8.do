@@ -19,7 +19,7 @@ clear all
 
 **# EXERCISE 1	
 
-* QUESTION 1
+* QUESTION 1 - @Tommaso
 
 
 
@@ -151,15 +151,13 @@ Can you reject the the null hypothesis of the test of joint significance of the 
 Based on the size the F-statistic, can you say if finite sample bias is likely or not to be an issue in this case?
 */
 
-reg Education Quarter1 Quarter2 Quarter3 `Controls' `Birth_Year_FEs'
+reg Education Quarter1 Quarter2 Quarter3 `Controls' `Birth_Year_FEs', vce(robust)
 scalar R_sqrd = e(r2)
 display R_sqrd
 
 ssc install pcorr2, replace
-pcorr2 Education Quarter1 Quarter2 Quarter3 `Controls' `Birth_Year_FEs' //The squared partial correlation of the ...
+pcorr2 Education Quarter1 Quarter2 Quarter3 `Controls' `Birth_Year_FEs' //The squared partial correlation of the instruments in explaining Education is very low
 
-
-*ADD A FEW LINES ABOUT THE NULL HYPOTHESIS OF JOINT SIGNIFICANCE IN THE LONG ANSWER BELOW
 
 /*
 Y = /beta X + /epsilon		(1) - original model to be estimated - X is endogenous
@@ -168,11 +166,13 @@ X = /pie Z + /nu 			(2)	- First stage
 Bound et al. (1995) analyse two cases under which the IV approach can lead to unconsistent estimates, with inconsistency that could be larger than that of the OLS estimator using and endogenous variable. 
 One case is that of a weak instrument: when the instrument Z, used to get around the problem of endogeneity of the treatment variable X, is weakly correlated with the endogenous variable in question, this is likely to generate a large inconsistency in the IV estimates. In the case of an IV approach with no covariates, the authors prove this by showing that the ratio of the inconsistency of the IV estimator to the inconsistency of the OLS estimator is an expression that has at the denominator the correlation between X and Z, and at the numerator, the correlation between Z and the error term, and X and the error term. Therefore, if the instrument is only slightly endogenous (i.e., if the instrument Z has a very low correlation with the unboservable characteristics that affect Y in eq. (1)), this bias can be greatly amplified by low correlation between Z and X. In an IV setting where the first stage (and thus the second stage) include some covariates as in this case, Bound et al. prove that the ratio of the inconsistency of IV to inconsistency of OLS id negatively associated to the partial R-squared of the first stage, that is, the R-squared from the regression of x on z once the common exogenous variable have been partialled out from both X and Z.
 
-In our case, since the partialled R-Squared for all three instruments is very low, if the quarter of birth proves to be even slightly endogenous to the unobserved characteristics that might affect health status, then the coefficient computed in the second stage could be biased. For example, if the quarter of birth is endogenous to the socio-economic status of individuals in the sample, then the IV coefficient could be upward biased. This could be a plausible explanation since our IV estimate is higher than the OLS estimate. Angrist and Krueger (1991, 1992 - a subsequent paper) provide many evidence to show that compulsory attendance laws are working to induce a correlation in educational attainment. However, if compulsory schooling law are not the ONLY channel through which quarter of birth and educational attainment are correlated (exclusion restriction), and quarter of birth is correlated in some way with health status, then our IV estimate can be strongly inconsistent, even more than than the OLS. Bound et al. 1995 provide some evidence of the correlation between birth seasonality and physical and mental health of individuals, listing some papers that prove that individuals born early in the years are more likely to be affected by schizofrenia, mental retardation, autism etc. 
+In our case, since the partialled R-Squared for all three instruments is very low, if the quarter of birth proves to be even slightly endogenous to the unobserved characteristics that might affect health status, then the coefficient computed in the second stage in point (d) could be biased. For example, if the quarter of birth is endogenous to the socio-economic status of individuals in the sample, then the IV coefficient could be upward biased. This could be a plausible explanation since our IV estimate is higher than the OLS estimate. Angrist and Krueger (1991, 1992 - a subsequent paper) provide many evidence to show that compulsory attendance laws are working to induce a correlation in educational attainment. However, if compulsory schooling law are not the ONLY channel through which quarter of birth and educational attainment are correlated (exclusion restriction), and quarter of birth is correlated in some way with health status, then our IV estimate can be strongly inconsistent, even more than than the OLS. Bound et al. 1995 provide some evidence of the correlation between birth seasonality and physical and mental health of individuals, listing some papers that prove that individuals born early in the years are more likely to be affected by schizofrenia, mental retardation, autism etc. 
+
+As to the test of joint significance of the instruments, since the p-value of the F-test of the regression run in  line 154 (first stage) is virtually 0, we can reject the null hypothesis. 
 
 The other problem discussed by Bound and coauthors when dealing with IVs is related to finite-sample bias. Assuming that the instrument Z is completely exogenous, the IV is a consistent estimator of /beta, but in finite samples, it is biased in the same direction of the OLS estimator. The magnitude of the bias depends negatively on the sample size, and negatively on the multiple correlation between the instruments and the endogenous explanatory variables.
 
-Bound et al. (1995) suggest that to assess finite-sample bias, it is useful to examine the F-statistic from the First Stage. They claim that the bias of the instrumental variable (IV) relative to ordinary least squares (OLS) is inversely related to the F-statistic of the excluded instruments from the first stage. In our analysis, we obtained an F-statistic of 62. According to Bound et al. (1995), a close-to-1 F-statistic raises concerns about finite-sample bias. However, since our F-statistic is large, we can confidently state that finite-sample bias is not an issue in this case. Additionally, Staiger and Stock (1994) suggest that the bias of OLS relative to IV could be approximated by 1/F, where F is the F-statistic. Therefore, if the F-statistic is large, as in our case, the bias is likely to be very small. 
+Bound et al. (1995) suggest that to assess finite-sample bias, it is useful to examine the F-statistic from the First Stage. They claim that the bias of the instrumental variable (IV) relative to ordinary least squares (OLS) is inversely related to the F-statistic of the excluded instruments from the first stage. In our analysis, we obtained an F-statistic of 62. According to Bound et al. (1995), a close-to-1 F-statistic raises concerns about finite-sample bias. However, since our F-statistic is large, we can confidently state that finite-sample bias is not an issue in this case. Additionally, Staiger and Stock (1994) suggest that the bias of OLS relative to IV could be approximated by 1/F, where F is the F-statistic. Therefore, if the F-statistic is large, as in our case, the bias is likely to be very small.
 */
 
 *(f) 
@@ -210,6 +210,8 @@ display F_test_Year_Quarter
 
 display F_test_State_Quarter
 *3.1663298
+
+* ANSWER TO: Can you say if both regressions are likely to sufferer from finite sample bias?
 
 }
 
@@ -535,10 +537,14 @@ graph export "FigureA3.png", replace
 quietly{
 *(a) State which are the identifying assumptions necessary for those IV estimates presented in Section V to be consistent. Discuss whether these assumptions are more or less plausible in this setting (relative to Autor et al., 2013).
 
+/*Under the assumption of homogeneous treatment effect, we need, as pointed out above, two main assumptions: 
+1) Relevance: changes in Chinese imports in other countries must be positively correlated with changes in imports from China in the US.
+2) Randomness: increase in imports in other countries should be independent of unobservable affecting political outcomes in the US.
+3) Exclusion restriction: changes in Chinese imports in other countries should affect political outcomes in the US ONLY THROUGH the effect that the increase in Chinese imports in these countries has on increase in imports in US countries. This can be true if the the common within-industry component of rising Chinese imports to the US and other high-income countries stems only from China's rising comparative advantage and/or falling trade costs.
 
+Comparing Autor et al. (2020) to Autor et al. 2013, we can claim that the identifications strategies are fairly similar in terms of plausibility of the assumptions. The  threats to identification in Autor et al. 2013 which could stem from the fact that raising import competition from China in other high-income countries could be correlated with unobservables affecting the US labour market can be valid here as well if it can be proven that labour market outcomes (employment, wages) affect significantly electoral outcomes. 
 
-
-
-
-
+On the other hand, another threat in the context of Autor et al. (2020) on top of those "derived" the labour market outcomes discussion, are given by the fact that to the extent that communication and cultural influxes are frequent, politics in other high-income countries and the US may be partially intertwined, and political trends may spill over from the US to these countries. If this were the case, and especially if political trends in the the high-income countries preceded those in the US, we would have correlated political shocks across countries which undermine the exclusion restriction as the instrument affects political outcomes in the US through a channel other than trade exposure. Existing empirical evidence supports the existence of political contamination across countries (Dominioni et al. 2020). This phenomenon could undermine the exclusion restriction: the increase of Chinese imports in other high-income countries could affect the political outcomes of those countries, leading to spillovers in US politics.
+However, this channel is perhaps more prominent in the long run, as in the case for the outcome under consideration here. Yet, to the extent that this effect is marginal and that imports in the high-income countries used predict well those in the US (relevance of the instrument), the identification scheme remains overall strong.
+*/
 }
