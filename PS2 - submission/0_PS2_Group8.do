@@ -19,7 +19,50 @@ clear all
 
 **# EXERCISE 1	
 
-* QUESTION 1 - @Tommaso
+
+use pset_2_q_1.dta, clear
+
+* QUESTION 1
+
+*(a)*
+
+collapse birthyear birthqtr (mean) Education, by(birthdate)
+
+twoway connected Education birthdate if birthyear < 1940, sort mcolor(black) msymbol(square) mlabel(birthqtr) mlabcolor(black) mlabposition(6) xtick(1930(1)1940) xlabel(1930(1)1940) ytick(12.0(0.1)12.9) ylabel(11.9(0.2)12.9, nogrid) ytitle(Years of Completed Education) xtitle(Year of Birth) title(FIGURE I, color(black) position(6)) subtitle("Years of Education and Season of Birth" "1980 Census", color(black) position(6)) note("{it:Note}. Quarter of birth is listed below each observation.", color(black) position(6))
+
+graph export "Figure_1.png", replace
+
+twoway connected Education birthdate if birthyear >= 1940 & birthyear < 1950, sort mcolor(black) msymbol(square) mlabel(birthqtr) mlabcolor(black) mlabposition(6) xtick(1940(1)1950) xlabel(1940(1)1950) ytick(12.7(0.1)13.7) ylabel(12.7(0.5)13.7, nogrid) ytitle(Years of Completed Education) xtitle(Year of Birth) title(FIGURE II, color(black) position(6)) subtitle("Years of Education and Season of Birth" "1980 Census", color(black) position(6)) note("{it:Note}. Quarter of birth is listed below each observation.", color(black) position(6))
+
+graph export "Figure_2.png", replace
+
+twoway connected Education birthdate if birthyear >= 1950 & birthyear < 1960, sort mcolor(black) msymbol(square) mlabel(birthqtr) mlabcolor(black) mlabposition(6) xtick(1950(1)1959) xlabel(1950(1)1959) ytick(12.0(0.1)13.5) ylabel(12.0(0.5)13.5, nogrid) ytitle(Years of Completed Education) xtitle(Year of Birth) title(FIGURE III, color(black) position(6)) subtitle("Years of Education and Season of Birth" "1980 Census", color(black) position(6)) note("{it:Note}. Quarter of birth is listed below each observation.", color(black) position(6))
+
+graph export "Figure_3.png", replace
+
+* Quarter of Birth appears to be relevant as instrument for Education. In our graphs, we can observe how the average of "Education" - the average number of years of education - for individuals born in quarter 1 of the year is consistently lower than for individuals born in quarters 2,3, and especially 4, which is consistently above quarter 1. The relationship is particularly relevant for people born in 1930s and 1940s, while it is less consistent (and eventually even flat or downward sloping) for the group of individuals born in the 1950s. Angrist & Krueger (1991) give us two possible explanations of this phenomenon: a reduction in college enrollment caused by the Vietnan War, and the fact that not enough time has passed when the census was carried out for all individuals born in the 1950s to have completed all of their schooling. However, as pointed out by the autors, the trend is clear: individuals born at the beginning of the year display consistently lower levels of education vis-a-vis those born at the end of the same year. 
+
+
+*(b)*
+
+* A relevant instrument is also exogenous if it satisfies two properties: Randomness and the Exclusion Restriction.
+
+* First, Randomness of the instrument Quarter of Birth is satistfied if the children's date of birth is randomly assigned, implying that their parents do not plan the date of delivery nor it is consistently misreported by doctors at the moment of birth (think about children born on New Year's Eve). Ideally, one would immagine this to be the case, but there is evidence of the contrary and of the fact that Quarter of Birth is not as-good-as randomly assigned. In particular Bound, Jaeger & Baker (1995) and Bound & Jaeger (1996) provide evidence of: 1) regional patterns in Quarter of Birth; 2) the fact children from high-income families are less likely to be born during winter. We have reason to believe that Quarter of Birth is not completely random, hence, it is not as good as randomly assigned.
+
+* The Exclusion Restriction requires that Quarter of Birth affects the outcome variable of analysis - in ou case, health status - only through its effect on Education. We have seen in Bound, Jaeger & Baker (1995) and in  Bound & Jaeger (1996) compelling evidence of the fact that the IV does not affect the outcome variable only through the Education channel. In particular, there is evidence of the fact that Quarter of Birth is associated with differences in healt status of individuals, performance in school, personality traits, family income, race, regional patterns. Therefore, in our setting it is likely that Quarter of Birth affects health status through more channels different from Education.
+
+* The IV design of Angrist & Krueger (1991) at least partially fails for two reasons. First, the fact the the IV is not randomly assigned; second, the fact that the exclusion restriction is likely to fail [as in Bound, Jaeger & Baker (1995) and Bound & Jaeger (1996)]. We have already provided evidence of the first failure, as Quarter of Birth is associated with family income and region of birth. Furthermore, Bound, Jaeger & Baker (1995) and Bound & Jaeger (1996) provide evidence of the fact that the IV is associated with variables different from Education, as behavioral and learning difficulties, mental health issues, race, etc., which clearly can have significant effects on the educational attainment of individuals and subsenquently on future earnings, a clear violation the exclusion restriction assumption.
+
+
+*(c)*
+
+* Generally speaking, we expect 2SLS estimators to be different from OLS estimators because of two factors: endogeneity of the instrument and a potentially weak first stage that amplies the bias originating from the first failure of the IV design. In this case, with no regard to the strenght of the first stage, we already know that estimates would be biased because of endogeneity of the instrument Quarter of Birth. We only need to reason on the direction of such bias. 
+
+* In our model, we are studying the effect that educational attainments have on an individual's health status. We believe that the OLS estimates would be biased upward for two reasons: 1) reverse causality; 2) endogeneity.
+* The model would most likely suffer from reverse causality or simultaneity bias because indeed better educated people might be more healty, but also the reverse is true. Indeed, people enjoying a better health status have more disposable income and less worries and are able to invest more in education. 
+* The model would soffer from endogeneity of the Education varibale because of omitted variable bias, as we are not considering many other variables of interest as family's income. The correlation between the error term and the omitted variables is likely positive, thus biasing upward our estimates. 
+
+* Compliers are the units who take the treatment when assigned to it, and don't take it otherwise. In this desing, they are individuals who drop out of school only when they reach the legal age of 16+ years that enables them to do so. 
 
 
 
