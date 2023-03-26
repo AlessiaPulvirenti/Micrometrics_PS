@@ -28,7 +28,7 @@ use pset_2_q_1.dta, clear
 
 collapse birthyear birthqtr (mean) Education, by(birthdate)
 
-twoway connected Education birthdate if birthyear < 1940, sort mcolor(black) msymbol(square) mlabel(birthqtr) mlabcolor(black) mlabposition(6) xtick(1930(1)1940) xlabel(1930(1)1940) ytick(12.0(0.1)12.9) ylabel(11.9(0.2)12.9, nogrid) ytitle(Years of Completed Education) xtitle(Year of Birth) title(FIGURE I, color(black) position(6)) subtitle("Years of Education and Season of Birth" "1980 Census", color(black) position(6)) note("{it:Note}. Quarter of birth is listed below each observation.", color(black) position(6))
+twoway connected Education birthdate if birthyear < 1940, sort mcolor(black) msymbol(square) mlabel(birthqtr) mlabcolor(black) mlabposition(6) xtick(1930(1)1940) xlabel(1930(1)1940) ytick(12.0(0.1)12.9) ylabel(11.9(0.2)12.9, nogrid) ytitle(Years of Completed Education) xtitle(Year of Birth) title(FIGURE I, color(black) position(6)) subtitle("Years of Education and Season of Birth" "1980 Census", color(black) position(6) size(9pt)) note("{it:Note}. Quarter of birth is listed below each observation.", color(black) position(6))
 
 graph export "Figure_1.png", replace
 
@@ -49,18 +49,18 @@ graph export "Figure_3.png", replace
 
 * First, Randomness of the instrument Quarter of Birth is satistfied if the children's date of birth is randomly assigned, implying that their parents do not plan the date of delivery nor it is consistently misreported by doctors at the moment of birth (think about children born on New Year's Eve). Ideally, one would immagine this to be the case, but there is evidence of the contrary and of the fact that Quarter of Birth is not as-good-as randomly assigned. In particular Bound, Jaeger & Baker (1995) and Bound & Jaeger (1996) provide evidence of: 1) regional patterns in Quarter of Birth; 2) the fact children from high-income families are less likely to be born during winter. We have reason to believe that Quarter of Birth is not completely random, hence, it is not as good as randomly assigned.
 
-* The Exclusion Restriction requires that Quarter of Birth affects the outcome variable of analysis - in ou case, health status - only through its effect on Education. We have seen in Bound, Jaeger & Baker (1995) and in  Bound & Jaeger (1996) compelling evidence of the fact that the IV does not affect the outcome variable only through the Education channel. In particular, there is evidence of the fact that Quarter of Birth is associated with differences in healt status of individuals, performance in school, personality traits, family income, race, regional patterns. Therefore, in our setting it is likely that Quarter of Birth affects health status through more channels different from Education.
+* The Exclusion Restriction requires that Quarter of Birth affects the outcome variable of analysis - in our case, health status - only through its effect on Education. We have seen in Bound, Jaeger & Baker (1995) and in  Bound & Jaeger (1996) compelling evidence of the fact that the IV does not affect the outcome variable only through the Education channel. In particular, there is evidence of the fact that Quarter of Birth is associated with differences in health status of individuals, performance in school, personality traits, family income, race, regional patterns. Therefore, in our setting it is likely that Quarter of Birth affects health status through more channels different from Education.
 
 * The IV design of Angrist & Krueger (1991) at least partially fails for two reasons. First, the fact the the IV is not randomly assigned; second, the fact that the exclusion restriction is likely to fail [as in Bound, Jaeger & Baker (1995) and Bound & Jaeger (1996)]. We have already provided evidence of the first failure, as Quarter of Birth is associated with family income and region of birth. Furthermore, Bound, Jaeger & Baker (1995) and Bound & Jaeger (1996) provide evidence of the fact that the IV is associated with variables different from Education, as behavioral and learning difficulties, mental health issues, race, etc., which clearly can have significant effects on the educational attainment of individuals and subsenquently on future earnings, a clear violation the exclusion restriction assumption.
 
 
 *(c)*
 
-* Generally speaking, we expect 2SLS estimators to be different from OLS estimators because of two factors: endogeneity of the instrument and a potentially weak first stage that amplies the bias originating from the first failure of the IV design. In this case, with no regard to the strenght of the first stage, we already know that estimates would be biased because of endogeneity of the instrument Quarter of Birth. We only need to reason on the direction of such bias. 
+* Generally speaking, we expect 2SLS estimators to be different from OLS estimators because of two factors: endogeneity of the instrument and a potentially weak first stage that amlifies the bias originating from the first failure of the IV design. In this case, with no regard to the strenght of the first stage, we already know that estimates would be biased because of endogeneity of the instrument Quarter of Birth. We only need to reason on the direction of such bias. 
 
 * In our model, we are studying the effect that educational attainments have on an individual's health status. We believe that the OLS estimates would be biased upward for two reasons: 1) reverse causality; 2) endogeneity.
-* The model would most likely suffer from reverse causality or simultaneity bias because indeed better educated people might be more healty, but also the reverse is true. Indeed, people enjoying a better health status have more disposable income and less worries and are able to invest more in education. 
-* The model would soffer from endogeneity of the Education varibale because of omitted variable bias, as we are not considering many other variables of interest as family's income. The correlation between the error term and the omitted variables is likely positive, thus biasing upward our estimates. 
+* The model would most likely suffer from reverse causality or simultaneity bias because indeed better educated people might be more healthy, but also the reverse is true. Indeed, people enjoying a better health status have more disposable income and less worries and are able to invest more in education. 
+* The model would soffer from endogeneity of the Education variable because of omitted variable bias, as we are not considering many other variables of interest as family's income. The correlation between the error term and the omitted variables is likely positive, thus biasing upward our estimates. 
 
 * Compliers are the units who take the treatment when assigned to it, and don't take it otherwise. In this desing, they are individuals who drop out of school only when they reach the legal age of 16+ years that enables them to do so. 
 
@@ -103,8 +103,6 @@ qui des
 	qui sum `Birth_Year_FEs'
 	
 *(c)*
-	*I used vce(robust) everywhere not sure if it's right
-	
 	qui reg Healthy Education, vce(robust)
 	estimates store Regression_1
 	qui reg Healthy Education `Controls', vce(robust)
@@ -114,26 +112,42 @@ qui des
 	
 *(d)*
 	qui reg Healthy Education, vce(robust)
-	outreg2 using TABLE_Q_2.xls, excel replace nocons keep(Education) addtext(Controls, NO, Birth Year FEs, NO)  addstat("Mean y", mu_y, "Mean x", mu_x) ctitle("")
+	outreg2 using TABLE_Q_2.xls, excel replace nocons keep(Education) addtext(Controls, NO, Birth Year FEs, NO)  addstat("Mean y", mu_y, "Mean x", mu_x) ctitle("") title("OLS and IV Regressions")
 	qui reg Healthy Education `Controls', vce(robust)
 	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, YES, Birth Year FEs, NO)  addstat("Mean y", mu_y, "Mean x", mu_x) ctitle("")
 	qui reg Healthy Education `Controls' `Birth_Year_FEs', vce(robust)
 	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, YES, Birth Year FEs, YES)  addstat("Mean y", mu_y, "Mean x", mu_x) ctitle("")
 	
-*(e)*
-	*ssc install ivreg2
-	*qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3), robust //first
-	*qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls', robust //first
-	*qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', robust //first
+*(e)
+	ssc install ivreg2
+	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3), robust //first
+	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls', robust //first
+	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', robust //first
 
 *(f)*
-	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3), robust //first
+/*	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3), robust
 	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, NO, Birth Year FEs, NO)    addstat("F-statistic IVs", e(F)) ctitle("")
-	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls', robust //first
+	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls', robust
 	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, YES, Birth Year FEs, NO)    addstat("F-statistic IVs", e(F)) ctitle("")
-	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', robust //first
+	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', robust
 	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, YES, Birth Year FEs, YES)    addstat("F-statistic IVs", e(F)) ctitle("")
+
+*/	
 	
+
+ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3), first savefirst robust
+scalar F_inst = e(widstat)
+outreg2 using "Table_Q_2.xls", excel nocon bdec(5) sdec(5) keep(Education) append addtext(Controls, NO, Birth Year FEs, NO) addstat("Mean y", mu_y, "Mean x", mu_x, "F-statistic IVs", F_inst) ctitle("IV") title("OLS and IV")
+
+
+ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls', first savefirst robust
+scalar F_inst = e(widstat)
+outreg2 using "Table_Q_2.xls", excel nocon bdec(5) sdec(5) keep(Education) append addtext(Controls, YES, Birth Year FEs, NO) addstat("Mean y", mu_y, "Mean x", mu_x,"F-statistic IVs", F_inst) ctitle("IV") title("OLS and IV")
+
+
+ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', first savefirst robust
+scalar F_inst = e(widstat)
+outreg2 using "Table_Q_2.xls", excel nocon bdec(5) sdec(5) keep(Education) append addtext(Controls, YES, Birth Year FEs, YES) addstat("Mean y", mu_y, "Mean x", mu_x, "F-statistic IVs", F_inst) ctitle("IV") title("OLS and IV")
 }	
 
 
@@ -146,13 +160,13 @@ tab birthqtr, gen(Quarter)
 tab region, gen(Region)
 tab birthyear, gen(Birth)
 
-reg Healthy Education
+*reg Healthy Education
 
 local Controls "Central Married Region*"
 local Birth_Year_FEs "Birth*"
-reg Healthy Education `Controls' `Birth_Year_FEs'
-outreg2 using TABLE_Q_3.xls, excel replace keep(Education) nocons ///
-addtext(Controls, YES, Reg, OLS) ///
+reg Healthy Education `Controls' `Birth_Year_FEs', vce(robust)
+
+outreg2 using "Table_Q_3.xls", excel nocon dec(5) keep(Education) replace addtext(Controls, YES, Birth Year FEs, YES, Reg, OLS) addstat("Mean y", mu_y, "Mean x", mu_x) title("OLS and IV")
 
 
 *(b) - FIRST STAGE
@@ -162,18 +176,18 @@ ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_F
 scalar F_weak = e(widstat)
 est restore _ivreg2_Education
 outreg2 using TABLE_Q_3.xls, excel append ///
-keep(Quarter1 Quarter2 Quarter3) nocons ///
-addtext(Controls, YES, Reg, First Stage) ///
-addstat("F-statistic instruments", F_weak)
+keep(Quarter1 Quarter2 Quarter3) nocons dec(5) ///
+addtext(Controls, YES, Birth Year FEs, YES, Reg, First Stage) ///
+addstat("F-statistic instruments", F_weak, "Mean y", mu_y, "Mean x", mu_x)
 
 
 *(c) - REDUCED FORM
 local Controls "Central Married Region*"
 local Birth_Year_FEs "Birth*"
-reg Healthy Quarter1 Quarter2 Quarter3 `Controls' `Birth_Year_FEs'
+reg Healthy Quarter1 Quarter2 Quarter3 `Controls' `Birth_Year_FEs', vce(robust)
 outreg2 using TABLE_Q_3.xls, excel append /// 
-keep(Quarter1 Quarter2 Quarter3) nocons ///
-addtext(Controls, YES, Reg, Reduced Form) 
+keep(Quarter1 Quarter2 Quarter3) nocons dec(5) ///
+addtext(Controls, YES, Birth Year FEs, YES, Reg, Reduced Form) addstat("Mean y", mu_y, "Mean x", mu_x)
 
 ///ADD COMMENTS LINKED TO THE RESULTS IN 2(e)
 
@@ -185,8 +199,9 @@ local Birth_Year_FEs "Birth*"
 ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) ///
 `Controls' `Birth_Year_FEs', robust
 outreg2 using TABLE_Q_3.xls, excel append ///
-keep(Education) nocons ///
-addtext(Controls, YES, Reg, IV) 
+keep(Education) nocons dec(5) ///
+addtext(Controls, YES, Birth Year FEs, YES, Reg, Second Stage) addstat("Mean y", mu_y, "Mean x", mu_x)
+
 
 /*(e)
 Bound et al. (1995) discuss a number of issues that arise when confronted with both weak instruments and finite sample bias, in particular, when there exists a weak correlation between the instrument and the outcome variable. Discuss how these issues can generate a bias in the IV regression you have estimated in item (d).
