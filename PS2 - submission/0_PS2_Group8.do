@@ -185,7 +185,8 @@ outreg2 using TABLE_Q_3.xls, excel append ///
 keep(Quarter1 Quarter2 Quarter3) nocons dec(5) ///
 addtext(Controls, YES, Birth Year FEs, YES, Reg, Reduced Form) addstat("Mean y", mu_y, "Mean x", mu_x)
 
-///ADD COMMENTS LINKED TO THE RESULTS IN 2(e)
+*Based exclusively on the results of question 2(e) we are unable to identify the signs of the reduced form coefficients. However, the fact that first stage coefficients indicate a significant negative relationship between quarters of birth and education, coupled with the positive IV coefficients shown in 2(e), we expect reduced form coefficients to be negative. Such expectation is confirmed by the above results. Additionally, the magnitude of the effect of quarter of birth on education decreases for the third relative to the fourth quarter (Quarter3: -0.03531; Quarter1 and Quarter2, respectively: -0.16522, -0.12158), which leads us to expect close to zero not significant reduced form coefficient (also confirmed by the results). 
+
 
 
 *(d) - SECOND STAGE
@@ -265,8 +266,7 @@ display F_test_Year_Quarter
 display F_test_State_Quarter
 *3.1663298
 
-* ANSWER TO: Can you say if both regressions are likely to sufferer from finite sample bias?
-
+*The two regressions in (g) have F-Tests below 10. Low F-test statistics suggest weak instruments, in this case due to the presence of many instruments. Consequently, the resulting IV estimates - in both regressions - are likely to suffer from finite sample bias. 
 }
 
 **# EXERCISE 2
