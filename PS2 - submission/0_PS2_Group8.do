@@ -23,7 +23,7 @@ clear all
 use pset_2_q_1.dta, clear
 
 * QUESTION 1
-
+quietly{
 *(a)*
 
 collapse birthyear birthqtr (mean) Education, by(birthdate)
@@ -56,11 +56,13 @@ graph export "Figure_3.png", replace
 
 *(c)*
 
-* In our model, we are studying the effect that educational attainments have on individuals' health status. We believe that the OLS estimates would be biased upward for two reasons: 1) reverse causality; 2) endogeneity. The model would most likely suffer from reverse causality or simultaneity bias because better educated people might be more healty, but also the reverse is true. Indeed, people enjoying a better health status have more disposable income and less worries and are able to invest more in education. The model would suffer from endogeneity of the Education varibale because of omitted variable bias, as we are not considering many other variables of interest as family's income. The correlation with the error term is likely positive, thus biasing upward our estimates. Therefore, a valid 2SLS design would estimate a parameter which is going to be lower than the OLS one, as the 2SLS estimator would only capture the effect of Education on the outcome variable.
+* In Angrist & Krueger (1991), the instrument of the IV design is endogenous and weak, hence we expect 2SLS estimates to be higher than OLS estimates, as the bias caused by the failure of randomness and exlusion restriction is only amplified by the week 1st stage. If their IV design was valid - and Quarter of Birth proved to be a good instrument for Education - the 2SLS estimate should be lower than the OLS one for two reasons: 1) reverse causality; 2) endogeneity. The OLS model would most likely suffer from reverse causality or simultaneity bias, because better educated people display higher levels of income, but also the reverse is true, as richer individuals have more disposable income to invest in education. The model would also suffer from endogeneity of the Education variable because of omitted variable bias, as we are not considering many other variables of interest, as family's income. The correlation with the error term is likely positive, thus biasing upward our estimates. In conclusion, a valid 2SLS design with a good instrument would estimate a 2SLS parameter which should be lower than the OLS one, as the 2SLS estimator would only capture the effect of Education on the outcome variable.
+
+* In our model, we are studying the effect that educational attainments have on individuals' health status. Again, we have provided evidence of the fact that even in this setting Quarter of Birth would not satisfy the exclusion restriction and randomness, hence 2SLS estimates would be biased just as in Angrist & Krueger (1991). If instead we were able to provide a good instrument for Education, we would expect 2SLS estimates to be again lower than the OLS ones, which would suffer from the same issues of reverse causality and endogeneity of Education. In this setting, OLS would be biased because more educated individuals are often more healthy, but also the reverse would be true. Indeed, people enjoying a better health status have more disposable income, more incentives, and are able to invest more in education. The model would also suffer from endogeneity of the Education variable because of omitted variable bias, as again we are not considering many other variables of interest as family's income. 
 
 * In a setting where Quarter of Birth is the instrument for Education and the outcome is health status, compliers are the units who take the treatment when assigned to it and don't take it otherwise. In this design, they are individuals who drop out of school only when they reach the legal age of 16+ years enabling them to drop out. 
 
-
+}
 
 * QUESTION 2
 quietly{
@@ -121,16 +123,7 @@ qui des
 	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', robust //first
 
 *(f)*
-/*	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3), robust
-	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, NO, Birth Year FEs, NO)    addstat("F-statistic IVs", e(F)) ctitle("")
-	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls', robust
-	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, YES, Birth Year FEs, NO)    addstat("F-statistic IVs", e(F)) ctitle("")
-	qui ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', robust
-	outreg2 using TABLE_Q_2.xls, excel append nocons keep(Education) addtext(Controls, YES, Birth Year FEs, YES)    addstat("F-statistic IVs", e(F)) ctitle("")
-
-*/	
 	
-
 ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3), first savefirst robust
 scalar F_inst = e(widstat)
 outreg2 using "Table_Q_2.xls", excel nocon bdec(5) sdec(5) keep(Education) append addtext(Controls, NO, Birth Year FEs, NO) addstat("Mean y", mu_y, "Mean x", mu_x, "F-statistic IVs", F_inst) ctitle("IV") title("OLS and IV")
@@ -144,6 +137,7 @@ outreg2 using "Table_Q_2.xls", excel nocon bdec(5) sdec(5) keep(Education) appen
 ivreg2 Healthy (Education = Quarter1 Quarter2 Quarter3) `Controls' `Birth_Year_FEs', first savefirst robust
 scalar F_inst = e(widstat)
 outreg2 using "Table_Q_2.xls", excel nocon bdec(5) sdec(5) keep(Education) append addtext(Controls, YES, Birth Year FEs, YES) addstat("Mean y", mu_y, "Mean x", mu_x, "F-statistic IVs", F_inst) ctitle("IV") title("OLS and IV")
+
 }	
 
 
@@ -221,9 +215,9 @@ X = /pie Z + /nu 			(2)	- First stage
 Bound et al. (1995) analyse two cases under which the IV approach can lead to unconsistent estimates, with inconsistency that could be larger than that of the OLS estimator using and endogenous variable. 
 One case is that of a weak instrument: when the instrument Z, used to get around the problem of endogeneity of the treatment variable X, is weakly correlated with the endogenous variable in question, this is likely to generate a large inconsistency in the IV estimates. In the case of an IV approach with no covariates, the authors prove this by showing that the ratio of the inconsistency of the IV estimator to the inconsistency of the OLS estimator is an expression that has at the denominator the correlation between X and Z, and at the numerator, the correlation between Z and the error term, and X and the error term. Therefore, if the instrument is only slightly endogenous (i.e., if the instrument Z has a very low correlation with the unboservable characteristics that affect Y in eq. (1)), this bias can be greatly amplified by low correlation between Z and X. In an IV setting where the first stage (and thus the second stage) include some covariates as in this case, Bound et al. prove that the ratio of the inconsistency of IV to inconsistency of OLS id negatively associated to the partial R-squared of the first stage, that is, the R-squared from the regression of x on z once the common exogenous variable have been partialled out from both X and Z.
 
-In our case, since the partialled R-Squared for all three instruments is very low, if the quarter of birth proves to be even slightly endogenous to the unobserved characteristics that might affect health status, then the coefficient computed in the second stage in point (d) could be biased. For example, if the quarter of birth is endogenous to the socio-economic status of individuals in the sample, then the IV coefficient could be upward biased. This could be a plausible explanation since our IV estimate is higher than the OLS estimate. Angrist and Krueger (1991, 1992 - a subsequent paper) provide many evidence to show that compulsory attendance laws are working to induce a correlation in educational attainment. However, if compulsory schooling law are not the ONLY channel through which quarter of birth and educational attainment are correlated (exclusion restriction), and quarter of birth is correlated in some way with health status, then our IV estimate can be strongly inconsistent, even more than than the OLS. Bound et al. 1995 provide some evidence of the correlation between birth seasonality and physical and mental health of individuals, listing some papers that prove that individuals born early in the years are more likely to be affected by schizofrenia, mental retardation, autism etc. 
+Bound et al. (1995) suggest that one parameter to look at when assessing the consistency of the IV estimates is the partial R-squared. In our case, since the partial R-Squared for all three instruments is very low, if the quarter of birth proves to be even slightly endogenous to the unobserved characteristics that might affect health status, then the coefficient computed in the second stage in point (d) could be biased. For example, if the quarter of birth is endogenous to the socio-economic status of individuals in the sample, then the IV coefficient could be upward biased. This could be a plausible explanation since our IV estimate is higher than the OLS estimate. Angrist and Krueger (1991, 1992 - a subsequent paper) provide many evidence to show that compulsory attendance laws are working to induce a correlation in educational attainment. However, if compulsory schooling law are not the ONLY channel through which quarter of birth and educational attainment are correlated (exclusion restriction), and quarter of birth is correlated in some way with health status, then our IV estimate can be strongly inconsistent, even more than than the OLS. Bound et al. 1995 provide some evidence of the correlation between birth seasonality and physical and mental health of individuals, listing some papers that prove that individuals born early in the years are more likely to be affected by schizofrenia, mental retardation, autism etc. 
 
-As to the test of joint significance of the instruments, since the p-value of the F-test of the regression run in  line 154 (first stage) is virtually 0, we can reject the null hypothesis. 
+As to the test of joint significance of the instruments, since the p-value of the F-test of the regression run in line 162 (first stage) is virtually 0, we can reject the null hypothesis. 
 
 The other problem discussed by Bound and coauthors when dealing with IVs is related to finite-sample bias. Assuming that the instrument Z is completely exogenous, the IV is a consistent estimator of /beta, but in finite samples, it is biased in the same direction of the OLS estimator. The magnitude of the bias depends negatively on the sample size, and negatively on the multiple correlation between the instruments and the endogenous explanatory variables.
 
@@ -266,7 +260,7 @@ display F_test_Year_Quarter
 display F_test_State_Quarter
 *3.1663298
 
-*The two regressions in (g) have F-Tests below 10. Low F-test statistics suggest weak instruments, in this case due to the presence of many instruments. Consequently, the resulting IV estimates - in both regressions - are likely to suffer from finite sample bias. 
+*The two regressions in (g) have F-Tests below 10. Low F-test statistics, close to the value of 1, suggest weak instruments (Staiger and Stock, 1997), in this case due to the presence of many instruments. Consequently, the resulting IV estimates - in both regressions - are likely to suffer from finite sample bias. 
 }
 
 **# EXERCISE 2
