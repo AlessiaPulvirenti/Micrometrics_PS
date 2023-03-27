@@ -27,7 +27,7 @@ Question 1 and Question 2 here
 * QUESTION 3
 
 
-cd "C:\Users\pulvi\OneDrive - Università Commerciale Luigi Bocconi\Depr(ESS)ion\2. Second Year\Micrometrics\PS\Micrometrics_PS\Alessia"
+cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\PS\problem set 2\exercise_2"
 /* (a) Estimate an OLS regression of Healthy on Education using Controls and Birth Year
 FEs as controls, and export it to an excel table named TABLE Q_3. 
 Only show the coefficient of Education and the usual regression statistics.
@@ -142,14 +142,14 @@ for Education, and Controls, Birth Year FEs, and State FEs as controls.
 Use Wyoming as omitted category for state of birth and include Washington DC.
 */
 local Year_Quarter_FEs "Year_quarter1-Year_quarter39"
-local Controls "Central Married Region*"
-local Birth_Year_FEs "Birth*"
+local Controls "Central Married region*"
+local Birth_Year_FEs "birthyear_FE*"
 ivreg2 Healthy (Education = `Year_Quarter_FEs') ///
 `Controls' `Birth_Year_FEs', robust partial(`Birth_Year_FEs')
 
 local State_Quarter_FEs "State_quarter1-State_quarter203"
-local Controls "Central Married Region*"
-local Birth_Year_FEs "Birth*"
+local Controls "Central Married region*"
+local Birth_Year_FEs "birthyear_FE*"
 local State_FEs "State1-State50"
 ivreg2 Healthy (Education = `State_Quarter_FEs') ///
 `Controls' `Birth_Year_FEs' `State_FEs', robust partial(`Birth_Year_FEs' `State_FEs')

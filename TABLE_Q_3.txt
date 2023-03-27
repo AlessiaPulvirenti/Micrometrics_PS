@@ -1,0 +1,19 @@
+	(1)	(2)	(3)	(4)
+VARIABLES	Healthy	Education	Healthy	Healthy
+				
+Quarter1		-0.165***	-0.00177***	
+		(0.0138)	(0.000536)	
+Quarter2		-0.122***	-0.00150***	
+		(0.0139)	(0.000539)	
+Quarter3		-0.0353***	1.19e-05	
+		(0.0135)	(0.000530)	
+Education	0.00459***			0.0122***
+	(5.46e-05)			(0.00290)
+				
+Observations	496,790	496,790	496,790	496,790
+R-squared	0.031		0.018	-0.007
+Controls	YES	YES	YES	YES
+Reg	OLS	First Stage	Reduced Form	IV
+F-statistic instruments		61.05		
+Standard errors in parentheses				
+*** p<0.01, ** p<0.05, * p<0.1				
