@@ -185,7 +185,7 @@ outreg2 using TABLE_Q_3.xls, excel append ///
 keep(Quarter1 Quarter2 Quarter3) nocons dec(5) ///
 addtext(Controls, YES, Birth Year FEs, YES, Reg, Reduced Form) addstat("Mean y", mu_y, "Mean x", mu_x)
 
-*Based exclusively on the results of question 2(e) we are unable to identify the signs of the reduced form coefficients. However, the fact that first stage coefficients indicate a significant negative relationship between quarters of birth and education, coupled with the positive IV coefficients shown in 2(e), we expect reduced form coefficients to be negative. Such expectation is confirmed by the above results. Additionally, the magnitude of the effect of quarter of birth on education decreases for the third relative to the fourth quarter (Quarter3: -0.03531; Quarter1 and Quarter2, respectively: -0.16522, -0.12158), which leads us to expect close to zero not significant reduced form coefficient (also confirmed by the results). 
+*Based exclusively on the results of question 2(e) we are unable to identify the signs of the reduced form coefficients. However, given that first stage coefficients indicate a significant negative relationship between quarters of birth and education, and the positive IV coefficients shown in 2(e), we expect reduced form coefficients to be negative. Such expectation is confirmed by the above regression. Additionally, the magnitude of the effect of quarter of birth on education decreases for the third relative to the fourth quarter (Quarter3: -0.03531; Quarter1 and Quarter2, respectively: -0.16522, -0.12158), which leads us to expect close to zero not significant reduced form coefficient (also confirmed by the results). 
 
 
 
