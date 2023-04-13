@@ -122,7 +122,63 @@ rename _dist X
 rename cov T
 
 *(a)
-rdplot T X, graph_options(xtitle(Running Variable) ytitle(Treatment Variable))
+rdrobust vote_comb X, fuzzy(T) p(1) kernel(triangular)
+scalar h_left = -e(h_l)	//Lower bound of the sample used to estimate the polynomial
+scalar h_right = e(h_r)
+display h_right - h_left
 
+rdplot T X, graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(1) h(20) nbins(20) kernel(triangular)
+
+rdplot T X, graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(1) h(20) nbins(10)	kernel(triangular)
+
+rdrobust vote_comb X, p(1) kernel(triangular)
+rdrobust vote_comb_ind X, fuzzy(T) p(1) kernel(triangular)
+
+* Using the same settings that Gonzales (2021) employs to produce Figure 3 of the paper (page 17), we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. For a fuzzy RDD strategy to work, it must be that there is no selection into coverage, that is, that the phone providers do not select where to locate based on characteristics which can also affect the level of fraud in elections, such as education levels, urbanisation levels, population density. In his "Additional Results" section, Gonzales (2021) provides evidence of the fact that selection into coverage is not a cause of concern for the one-dimensional RD design adopted. Another threat to identification is Mobile Coverage Spillovers and Spatial Displacement of Fraud. Coverage in one area can lead to positive spillovers in another area which is officially considered as "uncovered". In particular, and this emerges from our RD plot, spillovers can result from a coverage boundary which is not sharp. This could be the case if polling centers in non-coverage areas (at the boundary of non-coverage areas) can still benefit from coverage from close areas. If this were to be the case, than non-coverage areas can have lower level of fraud because they benefitted from coverage from other areas. This could downward bias the one-dimensional estimates that Gonzales (2021) shows in Table 2 of page 18 of the paper. A proper fuzzy RDD design cannot be implemented because we are not sure if these polling centers acyally benefitted from some coverage from the neighbouring centers (in that case, they would be non-compliers but we cannot ascertain that). As a consequence, 
+
+
+*(b)
+
+
+
+
+
+
+*(c)
+
+*Optimal Bandwidth
+
+foreach var in /*600 95 ecc*/ comb comb_ind {
+		rdbwselect vote_`var' temp if ind_seg50==1, vce(cluster segment50)
+		scalar hopt_`var'=e(h_mserd)
+		forvalues r=1/2 {
+			rdbwselect vote_`var' temp if ind_seg50==1 & region2==`r', vce(cluster segment50)
+			scalar hopt_`var'_`r'=e(h_mserd)
+	}
+}
+
+
+
+
+
+********************************************************************************
+* 		B. Local Linear Regression (using distance as forcing variable)
+********************************************************************************
+
+foreach var in /*600 95 ecc*/ comb_ind comb {	
+	* All regions
+	xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var', fe robust 
+		est store col1_a_`var'
+
+	* Southeast
+	xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var'_1 & ///
+	region2==1, fe robust 
+		est store col1_b_`var'
+
+	* Northwest
+	xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var'_2 & ///
+	region2==2, fe robust 
+		est store col1_c_`var'
+ }
 
 
