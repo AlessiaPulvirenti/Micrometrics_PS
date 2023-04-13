@@ -23,7 +23,7 @@ use fraud_pcenter_final.dta
 *The distance between the polling centers and their closest points with 2G coverage is titled "_dist"; the cell phone coverage indicator is titled "cov".
 
 *(a)
-rdplot cov _dist, graph_options(title(T-X Discontinuity) legend(off)) 
+rdplot cov _dist, graph_options(xtitle(Distance from closest 2G coverage area) ytitle(Cell phone coverage) legend(off)) 
 graph rename T_X, replace
 ///distance approx. above 25 from the closest points with 2G coverage positive coverage, above approx. 25 no coverage. 
 rdrobust cov _dist
