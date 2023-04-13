@@ -146,20 +146,24 @@ rdrobust vote_comb_ind X, fuzzy(T) p(1) kernel(triangular)
 
 *(c)
 
+
 *Optimal Bandwidth
 
+*Our dist variable takes already into account the fact that negative values of the variable indicate those that are in non-covered areas, so we do not need to create a temp variable to compute the optimal bandwidth. 
+
 foreach var in /*600 95 ecc*/ comb comb_ind {
-		rdbwselect vote_`var' temp if ind_seg50==1, vce(cluster segment50)
+		rdbwselect vote_`var' _dist if ind_seg50==1, vce(cluster segment50)
 		scalar hopt_`var'=e(h_mserd)
 		forvalues r=1/2 {
-			rdbwselect vote_`var' temp if ind_seg50==1 & region2==`r', vce(cluster segment50)
+			rdbwselect vote_`var' _dist if ind_seg50==1 & region2==`r', vce(cluster segment50)
 			scalar hopt_`var'_`r'=e(h_mserd)
 	}
 }
 
+xtset, clear
+xtset segment50 pccode
 
-
-
+replace _dist = -_dist if cov == 0
 
 ********************************************************************************
 * 		B. Local Linear Regression (using distance as forcing variable)
@@ -167,16 +171,16 @@ foreach var in /*600 95 ecc*/ comb comb_ind {
 
 foreach var in /*600 95 ecc*/ comb_ind comb {	
 	* All regions
-	xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var', fe robust 
+	xtreg vote_`var' cov##c.(_dist) if ind_seg50==1 & _dist<=hopt_`var', fe robust 
 		est store col1_a_`var'
 
 	* Southeast
-	xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var'_1 & ///
+	xtreg vote_`var' cov##c.(_dist) if ind_seg50==1 & _dist<=hopt_`var'_1 & ///
 	region2==1, fe robust 
 		est store col1_b_`var'
 
 	* Northwest
-	xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var'_2 & ///
+	xtreg vote_`var' cov##c.(_dist) if ind_seg50==1 & _dist<=hopt_`var'_2 & ///
 	region2==2, fe robust 
 		est store col1_c_`var'
  }
