@@ -1,0 +1,16 @@
+{
+\def\sym#1{\ifmmode^{#1}\else\(^{#1}\)\fi}
+\begin{tabular}{l*{4}{c}}
+\hline\hline
+            &\multicolumn{1}{c}{(1)}&\multicolumn{1}{c}{(2)}&\multicolumn{1}{c}{(3)}&\multicolumn{1}{c}{(4)}\\
+            &\multicolumn{1}{c}{\makecell{Base\\ (1)}}&\multicolumn{1}{c}{\makecell{+trunk\\(2)}}&\multicolumn{1}{c}{\makecell{+headroom\\(3)}}&\multicolumn{1}{c}{\makecell{+length\\(4)}}\\
+\hline
+mpg         &   -2.39e+02\sym{***}&   -2.20e+02\sym{***}&   -2.24e+02\sym{***}&   -1.74e+02\sym{*}  \\
+            &  (53.07669)         &  (65.59262)         &  (65.27511)         &  (87.75118)         \\
+\hline
+\(N\)       &          74         &          74         &          74         &          74         \\
+\(R^{2}\)   &       0.220         &       0.222         &       0.242         &       0.250         \\
+\hline\hline
+\multicolumn{5}{l}{\footnotesize \begin{minipage}{.8\linewidth} \footnotesize \smallskip \textbf{Note:} Table reports regression estimates about cars. Significance levels are indicated by $*$ $<.1$, ** $<.05$,  *** $<.01$.   \end{minipage}}\\
+\end{tabular}
+}

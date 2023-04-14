@@ -11,7 +11,7 @@ net install lpdensity, ///
 from("https://raw.githubusercontent.com/nppackages/lpdensity/master/stata") replace
 
 *******************************************
-**# QUESTION 1
+**# EXERCISE 1
 
 *(a)
 use "pset_3.dta", clear
@@ -87,7 +87,6 @@ rdrobust Y X, p(1) kernel(triangular)
 //WRITE COMMENT HERE
 
 
-
 *(i)
 * Generate variables to fit a polynomial of order 4
 gen X_2 = X^2
@@ -118,26 +117,45 @@ X_T X_T_2 X_T_3 X_T_4
 
 use "fraud_pcenter_final.dta", clear
 
-rename _dist X
-rename cov T
-
 *(a)
-rdrobust vote_comb X, fuzzy(T) p(1) kernel(triangular)
-scalar h_left = -e(h_l)	//Lower bound of the sample used to estimate the polynomial
-scalar h_right = e(h_r)
-display h_right - h_left
 
-rdplot T X, graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(1) h(20) nbins(20) kernel(triangular)
+*Generate the "adjusted" measure of distance, both for our proxied variable, _dist, and the dist variable used by Gonzales 2021. 
 
-rdplot T X, graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(1) h(20) nbins(10)	kernel(triangular)
+gen _temp=_dist
+replace _temp=-_dist if cov==0
 
-rdrobust vote_comb X, p(1) kernel(triangular)
-rdrobust vote_comb_ind X, fuzzy(T) p(1) kernel(triangular)
+gen temp=dist
+replace temp=-dist if cov==0
 
-* Using the same settings that Gonzales (2021) employs to produce Figure 3 of the paper (page 17), we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. For a fuzzy RDD strategy to work, it must be that there is no selection into coverage, that is, that the phone providers do not select where to locate based on characteristics which can also affect the level of fraud in elections, such as education levels, urbanisation levels, population density. In his "Additional Results" section, Gonzales (2021) provides evidence of the fact that selection into coverage is not a cause of concern for the one-dimensional RD design adopted. Another threat to identification is Mobile Coverage Spillovers and Spatial Displacement of Fraud. Coverage in one area can lead to positive spillovers in another area which is officially considered as "uncovered". In particular, and this emerges from our RD plot, spillovers can result from a coverage boundary which is not sharp. This could be the case if polling centers in non-coverage areas (at the boundary of non-coverage areas) can still benefit from coverage from close areas. If this were to be the case, than non-coverage areas can have lower level of fraud because they benefitted from coverage from other areas. This could downward bias the one-dimensional estimates that Gonzales (2021) shows in Table 2 of page 18 of the paper. A proper fuzzy RDD design cannot be implemented because we are not sure if these polling centers acyally benefitted from some coverage from the neighbouring centers (in that case, they would be non-compliers but we cannot ascertain that). As a consequence, 
 
+*Polynomial of order 4
+rdplot cov _temp, graph_options(xtitle(New Running Variable) ytitle(Treatment Variable))
+
+*Polynomial of order 1
+rdplot cov _temp , graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(1) kernel(triangular)
+
+*Polynomial of order 3
+rdplot cov _temp , graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(3) kernel(triangular)
+
+rdplot cov temp, graph_options(xtitle(Old Running Variable from Gonzales 2021) ytitle(Treatment Variable)) 
+*Here, we perform RD plot using the adjusted distance variable directly from Gonzales (2021) - we can see, as written in the paper, that it is a sharp discontinuity. 
+
+rdrobust vote_comb _temp, p(1) kernel(triangular) fuzzy(cov)
+rdrobust vote_comb_ind _temp, p(1) kernel(triangular) fuzzy(cov)
+
+
+/* Looking at the RD plot of the adjusted version of the treatment variable on the adjusted version _dist we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. On the other hand, by plotting coverage on the measure of distance used by the author, i.e., temp, we can see that the discontinuity is sharp. Indeed the Gonzales employs a one-dimensional sharp RDD. For his one-dimensional estimates to be valid, the following identification assumptions must hold: 
+---> [WRITE HERE IDENTIFICATION ASSUMPTIONS]
+
+Moreover, Gonzales 2021 identifies some threats to identification: 
+--> [WRITE HERE THREATS TO IDENTIFICATION FROM THE ADDITIONAL RESULTS SECTION]
+* it must be that that the phone providers do not select where to locate based on characteristics which can also affect the level of fraud in elections, such as education levels, urbanisation levels, population density. 
+
+* In his "Additional Results" section, Gonzales (2021) provides evidence of the fact that selection into coverage is not a cause of concern for the one-dimensional RD design adopted. Another threat to identification is Mobile Coverage Spillovers and Spatial Displacement of Fraud. Coverage in one area can lead to positive spillovers in another area which is officially considered as "uncovered". In particular, and this emerges from our RD plot using the distance measure with proxied latitude, spillovers can result from a coverage boundary which is not sharp. This could be the case if polling centers in non-coverage areas (at the boundary of non-coverage areas) can still benefit from coverage from close areas. If this were to be the case, than non-coverage areas can have lower level of fraud because they benefitted from coverage from other areas. This could downward bias the one-dimensional estimates that Gonzales (2021) shows in Table 2 of page 18 of the paper. A proper fuzzy RDD design cannot be implemented by Gonzales because we are not sure if these polling centers acyally benefitted from some coverage from the neighbouring centers (in that case, they would be non-compliers but we cannot ascertain that). ANOTHER THREAT IS... [CONTINUE]
+*/
 
 *(b)
+* The setting in which we would not have to change the (sharp) RD design used by Gonzales 2021 would be one in which the cell phone coverage boundaries are sharp. This would be the case if ... (mutually exclusive areas, no spillovers...) --> In this way we would obtain a sharp RD plot of the first stage, as when we plot rdplot cov temp. 
 
 
 
@@ -152,10 +170,10 @@ rdrobust vote_comb_ind X, fuzzy(T) p(1) kernel(triangular)
 *Our dist variable takes already into account the fact that negative values of the variable indicate those that are in non-covered areas, so we do not need to create a temp variable to compute the optimal bandwidth. 
 
 foreach var in /*600 95 ecc*/ comb comb_ind {
-		rdbwselect vote_`var' _dist if ind_seg50==1, vce(cluster segment50)
+		rdbwselect vote_`var' _temp if ind_seg50==1, vce(cluster segment50)
 		scalar hopt_`var'=e(h_mserd)
 		forvalues r=1/2 {
-			rdbwselect vote_`var' _dist if ind_seg50==1 & region2==`r', vce(cluster segment50)
+			rdbwselect vote_`var' _temp if ind_seg50==1 & region2==`r', vce(cluster segment50)
 			scalar hopt_`var'_`r'=e(h_mserd)
 	}
 }
@@ -163,26 +181,47 @@ foreach var in /*600 95 ecc*/ comb comb_ind {
 xtset, clear
 xtset segment50 pccode
 
-replace _dist = -_dist if cov == 0
 
 ********************************************************************************
 * 		B. Local Linear Regression (using distance as forcing variable)
 ********************************************************************************
 
-foreach var in /*600 95 ecc*/ comb_ind comb {	
+foreach var in comb_ind comb {	
 	* All regions
-	xtreg vote_`var' cov##c.(_dist) if ind_seg50==1 & _dist<=hopt_`var', fe robust 
+	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var', fe robust 
 		est store col1_a_`var'
 
 	* Southeast
-	xtreg vote_`var' cov##c.(_dist) if ind_seg50==1 & _dist<=hopt_`var'_1 & ///
+	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
 	region2==1, fe robust 
 		est store col1_b_`var'
 
 	* Northwest
-	xtreg vote_`var' cov##c.(_dist) if ind_seg50==1 & _dist<=hopt_`var'_2 & ///
+	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
 	region2==2, fe robust 
 		est store col1_c_`var'
  }
+ 
+ * Putting the table together - Wide version
+estout col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
+using "results_onedim_a.tex", replace style(tex) ///
+label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
+keep(1.cov) mlabels(, none) collabels("\makecell{All Regions\\ (1)}" "\makecell{Southeast Region(3)}" "\makecell{Northeast Region\\(5)}") eqlabels(, none)
+
+estout col1_a_comb  col1_b_comb  col1_c_comb  ///
+using "results_onedim_b.tex", replace style(tex) ///
+label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
+keep(1.cov) mlabels(, none) collabels("All Regions", "Southeast Region", "Northeast Region") eqlabels(, none)
 
 
+include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/PanelCombine.do"
+panelcombine, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles("Panel A" "Panel B") save(combined_table.tex) cleanup
+
+
+
+estout col1_a_comb_*  col1_b_comb_*  col1_c_comb_*   ///
+using "_results_onedim_a.tex", replace style(tex) ///
+label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
+keep(1.cov) mlabels(, none) collabels(, none) eqlabels(, none) ///
+stats(Obs Mean Bw Gr, fmt(a3) ///
+labels("Observations" "Mean Outside coverage" "Bandwidth (km)" "Neighborhoods"))
