@@ -18,7 +18,7 @@ use "pset_3.dta", clear
 
 rdplot T X, graph_options(xtitle(Running Variable) ytitle(Treatment Variable))
 
-//The current design is a sharp RDD, because the Treatment variable is a deterministic probability (i.e., it takes either value 1 or 0) of the running variable. There is no partial compliance. 
+//The current design is a sharp RDD, because the Treatment variable is a deterministic probability function (i.e., it takes either value 1 or 0) of the running variable. There is no partial compliance. 
 
 *(b) ?????
 local covariates "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
@@ -127,7 +127,6 @@ replace _temp=-_dist if cov==0
 gen temp=dist
 replace temp=-dist if cov==0
 
-
 *Polynomial of order 4
 rdplot cov _temp, graph_options(xtitle(New Running Variable) ytitle(Treatment Variable))
 
@@ -190,32 +189,41 @@ foreach var in comb_ind comb {
 	* All regions
 	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var', fe robust 
 		est store col1_a_`var'
-
+		est title: "All regions"
+		est store col1_a_`var'
+		label variable _est_col1_a_`var' "All regions"
+		
 	* Southeast
 	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
 	region2==1, fe robust 
 		est store col1_b_`var'
+		est title: "Southeast"
+		est store col1_b_`var'
+		label variable _est_col1_b_`var' "Southeast"
 
 	* Northwest
 	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
 	region2==2, fe robust 
 		est store col1_c_`var'
+		est title: "Northwest"
+		est store col1_c_`var'
+		label variable _est_col1_c_`var' "Northwest"
  }
  
  * Putting the table together - Wide version
 estout col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
 using "results_onedim_a.tex", replace style(tex) ///
-label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
-keep(1.cov) mlabels(, none) collabels("\makecell{All Regions\\ (1)}" "\makecell{Southeast Region(3)}" "\makecell{Northeast Region\\(5)}") eqlabels(, none)
+cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
+keep(1.cov) mlabels() label title("Panel A - At least one station with Category C fraud") eqlabels(, none)
 
 estout col1_a_comb  col1_b_comb  col1_c_comb  ///
 using "results_onedim_b.tex", replace style(tex) ///
 label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
-keep(1.cov) mlabels(, none) collabels("All Regions", "Southeast Region", "Northeast Region") eqlabels(, none)
+keep(1.cov) mlabels() legend title("Panel B - Share of votes under Category C fraud") eqlabels(, none)
 
 
 include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/PanelCombine.do"
-panelcombine, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles("Panel A" "Panel B") save(combined_table.tex) cleanup
+panelcombine, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles() save(combined_table.tex)
 
 
 
@@ -225,3 +233,37 @@ label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) /
 keep(1.cov) mlabels(, none) collabels(, none) eqlabels(, none) ///
 stats(Obs Mean Bw Gr, fmt(a3) ///
 labels("Observations" "Mean Outside coverage" "Bandwidth (km)" "Neighborhoods"))
+
+
+
+outreg [col1_a_comb_* col1_b_comb_* col1_c_comb_*] using Table2_rep.xls, excel keep(1.cov) nocons label() title("Panel A - At least one station with Category C fraud") nor2 noni noobs nonotes replace
+
+outreg2 [col1_a_comb  col1_b_comb  col1_c_comb] using Table2_rep.xls, excel keep(1.cov) nocons label() title("Panel B - Share of votes under Category C fraud") nor2 noni noobs replace
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

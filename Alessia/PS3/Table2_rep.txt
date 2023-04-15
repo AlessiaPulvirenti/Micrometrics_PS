@@ -1,0 +1,8 @@
+Panel A - At least one station with Category C fraud			
+	(1)	(2)	(3)
+	col1_a_comb_ind	col1_b_comb_ind	col1_c_comb_ind
+VARIABLES	vote_comb_ind	vote_comb_ind	vote_comb_ind
+			
+1.cov	-0.0602**	-0.129***	0.0152
+	(0.0263)	(0.0452)	(0.0218)
+			
