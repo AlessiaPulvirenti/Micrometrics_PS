@@ -189,7 +189,7 @@ foreach var in comb_ind comb {
 	* All regions
 	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var', fe robust 
 		est store col1_a_`var'
-		est title: "All regions"
+		est title: "\makecell{All Regions\\ (1)}"
 		est store col1_a_`var'
 		label variable _est_col1_a_`var' "All regions"
 		
@@ -197,7 +197,7 @@ foreach var in comb_ind comb {
 	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
 	region2==1, fe robust 
 		est store col1_b_`var'
-		est title: "Southeast"
+		est title:  "\makecell{Southeast\\(3)}"
 		est store col1_b_`var'
 		label variable _est_col1_b_`var' "Southeast"
 
@@ -205,12 +205,31 @@ foreach var in comb_ind comb {
 	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
 	region2==2, fe robust 
 		est store col1_c_`var'
-		est title: "Northwest"
+		est title: "\makecell{Northwest\\(5)}"
 		est store col1_c_`var'
 		label variable _est_col1_c_`var' "Northwest"
  }
  
- * Putting the table together - Wide version
+
+* Putting the table together - Wide version with esttab
+esttab col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
+using "results_onedim_a.tex", replace style(tex) ///
+star(* 0.10 ** 0.05 *** 0.01) ///
+keep(1.cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label title("Table 2 - EFFECT OF CELLPHONE COVERAGE ON CATEGORY C FRAUD") eqlabels(none) nonotes
+
+esttab col1_a_comb  col1_b_comb  col1_c_comb  ///
+using "results_onedim_b.tex", replace style(tex) ///
+cells(b(star fmt(3)) se(par fmt(3))) star(* 0.10 ** 0.05 *** 0.01) ///
+keep(1.cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label eqlabels(none) nonotes
+
+
+include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/PanelCombineSutex.do"
+panelcombinesutex, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles("At least one station with Category C fraud" "Share of votes under Category C fraud") save(combined_table.tex) addcustomnotes("\begin{minipage}{`linewidth'\linewidth} \footnotesize \smallskip \textbf{Note:} Table shows summary statistics for cars in different estimation samples.\end{minipage}" )
+
+
+****OTHER (FAILED) ATTEMPTS
+/*
+* Putting the table together - Wide version
 estout col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
 using "results_onedim_a.tex", replace style(tex) ///
 cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
@@ -222,25 +241,11 @@ label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) /
 keep(1.cov) mlabels() legend title("Panel B - Share of votes under Category C fraud") eqlabels(, none)
 
 
-include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/PanelCombine.do"
-panelcombine, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles() save(combined_table.tex)
-
-
-
-estout col1_a_comb_*  col1_b_comb_*  col1_c_comb_*   ///
-using "_results_onedim_a.tex", replace style(tex) ///
-label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
-keep(1.cov) mlabels(, none) collabels(, none) eqlabels(, none) ///
-stats(Obs Mean Bw Gr, fmt(a3) ///
-labels("Observations" "Mean Outside coverage" "Bandwidth (km)" "Neighborhoods"))
-
-
 
 outreg [col1_a_comb_* col1_b_comb_* col1_c_comb_*] using Table2_rep.xls, excel keep(1.cov) nocons label() title("Panel A - At least one station with Category C fraud") nor2 noni noobs nonotes replace
 
 outreg2 [col1_a_comb  col1_b_comb  col1_c_comb] using Table2_rep.xls, excel keep(1.cov) nocons label() title("Panel B - Share of votes under Category C fraud") nor2 noni noobs replace
-
-
+*/
 
 
 
