@@ -35,7 +35,7 @@ graph export Graph_1.pdf, replace
 
 *(d)
 * Histogram
-rdrobust Y X
+rdrobust Y X //Put here options of RD robust
 scalar h_left = -e(h_l)	//Lower bound of the sample used to estimate the polynomial
 scalar h_right = e(h_r)	//Upper bound of the sample used to estimate the polynomial
 twoway (histogram X if X >=h_left & X < 0, freq width(1) color(blue)) ///
@@ -73,7 +73,7 @@ Running variable: X.
 forvalues i= -10(5)10{
 	rddensity X, c(`i')
 }
-* Looking at the outcomes for all 4 alternatives of cut-off thresholds, we can see that we cannot reject the null hypothesis at a significance above 15% for three values of the four chosen. However, at a threshold of -5.0, the null hypothesis of no manipulation can be rejected with a p-value of 0.055, i.e., at a standard significance level of 10%. This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
+* Looking at the outcomes for all 4 alternatives of cut-off thresholds, we can see that we cannot reject the null hypothesis at a significance above 15% for three values of the four chosen. However, at a threshold of -5.0, the null hypothesis of CONTINUITY can be rejected with a p-value of 0.055, i.e., at a standard significance level of 10%. This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
 
 *(g)
 rdplot Y X, nbins(20 20) graph_options(xtitle(Running Variable) ytitle(Outcome))
@@ -88,7 +88,7 @@ rdrobust Y X, p(1) kernel(triangular)
 
 
 *(i)
-* Generate variables to fit a polynomial of order 4
+* Generate variables to fit a polynomial of order 4 -- USE WEIGHTS! THEY WANT US TO USE TRIANGULAR KERNEL
 gen X_2 = X^2
 gen X_3 = X^3
 gen X_4 = X^4
@@ -143,7 +143,7 @@ rdrobust vote_comb _temp, p(1) kernel(triangular) fuzzy(cov)
 rdrobust vote_comb_ind _temp, p(1) kernel(triangular) fuzzy(cov)
 
 
-/* Looking at the RD plot of the adjusted version of the treatment variable on the adjusted version _dist we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. On the other hand, by plotting coverage on the measure of distance used by the author, i.e., temp, we can see that the discontinuity is sharp. Indeed the Gonzales employs a one-dimensional sharp RDD. For his one-dimensional estimates to be valid, the following identification assumptions must hold: 
+/* Looking at the RD plot of the treatment variable on the adjusted version _dist we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. On the other hand, by plotting coverage on the measure of distance used by the author, i.e., temp, we can see that the discontinuity is sharp. Indeed the Gonzales employs a one-dimensional sharp RDD. For his one-dimensional estimates to be valid, the following identification assumptions must hold: 
 ---> [WRITE HERE IDENTIFICATION ASSUMPTIONS]
 
 Moreover, Gonzales 2021 identifies some threats to identification: 

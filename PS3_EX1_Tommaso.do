@@ -103,7 +103,8 @@ graph export X_Y.png, replace
 
 rddensity X
 
-* With a p-value of 0.16 we are not ablet to reject the null hypothesis at any conventional significance level. Therefore, our data suggests that there is no statistically significant discontinuity in the running variable at the cutoff. thus indicating that the RD design is potentially invalid, at least for the suggested cutoff of c=0. It might be that at different cutoffs we obtain a significant discontinuity in the running variable. *
+/*COMMENTO DI ALE: 
+The null hypothesis of this tests is that the density of the running variable is "continuous" at the cutoff. The p-value of this test tells us that we cannot reject the null hypothesis at a significance of 15%, thus we have no discontinuity in the running variable, and no evidence of manipulation. We can thus conclude that wrt manipulation, this RD design is valid*/
 
 
 * (f) *
@@ -118,13 +119,13 @@ rddensity X, c(-5)
 
 rddensity X, c(5)
 
-* p-value: 0.0547 *
+* p-value: 0.4518 *
 
 rddensity X, c(10)
 
 * p-value: 0.5026 *
 
-* The manipulation testing plots indicate that we can easily disregard the cutoffs c = +/-10. Instead, the cutoffs c = +/-5 would lead us to reject the null hypothesis of no discontinuity in the running variable for a confidence level of 10%. *
+* The manipulation indicates that for cutoffs c = -10, -5, 10, there is no evidence of discontinuity (manipulation) in the running variable X. On the other hand, for a cutoff c = -5, we fail to reject the null of continuity at a significance level of 10%*
 
 
 * (g) *	
@@ -138,6 +139,8 @@ rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-2
 rdrobust Y X, p(1) kernel(triangular) bwselect(mserd)
 
 rdrobust Y X, p(1) kernel(uniform) bwselect(mserd)
+
+*yes, electing a mayor from an Islamic party has a statistically significant effect on the educational atteinment of women. Estimated coefficients and p-values are no significantly different under both kernels. 
 
 	
 * (i) *
