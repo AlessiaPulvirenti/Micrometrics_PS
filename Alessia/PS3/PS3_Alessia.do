@@ -1,4 +1,3 @@
-
 net install rdrobust, ///
 from("https://raw.githubusercontent.com/rdpackages/rdrobust/master/stata") replace
 *
@@ -83,12 +82,13 @@ rdplot Y X, nbins(20 20) graph_options(xtitle(Running Variable) ytitle(Outcome))
 rdrobust Y X, p(1) kernel(uniform)
 
 rdrobust Y X, p(1) kernel(triangular)
+**
 
 //WRITE COMMENT HERE
 
 
 *(i)
-* Generate variables to fit a polynomial of order 4 -- USE WEIGHTS! THEY WANT US TO USE TRIANGULAR KERNEL
+* We generate variables to fit a polynomial of order 4.
 gen X_2 = X^2
 gen X_3 = X^3
 gen X_4 = X^4
@@ -97,20 +97,179 @@ gen X_T = T*X
 gen X_T_2 = T*X_2
 gen X_T_3 = T*X_3
 gen X_T_4 = T*X_4
-*
-* Estimate global regression, fitting a polynomial of order 4 on our outcome
+
+* Estimate global regression, fitting a polynomial of order 4 on our outcome.
 reg Y T ///
 X X_2 X_3 X_4 ///
 X_T X_T_2 X_T_3 X_T_4
 
 
 *(j)
+* We estimate the effect of T on Y but using a local approach and save the optimal bandwidth, obtained via *rdrobust*'s mserd bandwidth, in a local:
+rdrobust Y X, all kernel(triangular) bwselect(mserd)
+local opt_i = e(h_l)
+
+*Local approach: 
+* Left of the cut-off
+reg Y X if X >=-`opt_i' & X < 0 
+matrix coef_left = e(b)
+matrix var_left = e(V)
+scalar intercept_left = coef_left[1, 2]
+
+* Right of the cut-off
+reg Y X if X >= 0 & X <=`opt_i'
+matrix coef_right = e(b)
+matrix var_right = e(V)
+scalar intercept_right = coef_right[1, 2]
+
+scalar difference = intercept_right - intercept_left
+matrix var_conventional = var_left + var_right
+scalar se_difference = sqrt(var_conventional[2,2])
+
+scalar list difference
+*difference =  3.0595105
+scalar list se_difference
+*se_difference =  1.2974771
+
+*We re-run the regression performed in point (h)
+rdrobust Y X, p(1) kernel(triangular)
+
+*We get different results. The coefficient obtained with rdrobust is 3.0595105, whereas the one obtained in (h) is 3.0195. ADD WHY!!!!
+
+***EXTRA - replicating *rdrobust*'s estimates under a triangular kernel***
+* To obtain the same coefficient obtained in point (h), we have to run a WLS with weights defined according to the triangular kernel formula. 
+
+* Generating the weights
+gen weights = .
+replace weights = (1 - abs(X/`opt_i')) if X < 0 & X >= -`opt_i'
+replace weights = (1 - abs(X/`opt_i')) if X >= 0 & X <= `opt_i'
+
+reg Y X [aw=weights] if X < 0 & X >= -`opt_i'
+matrix coef_left = e(b)
+matrix var_left = e(V)
+scalar intercept_left = coef_left[1, 2]
+
+*Right
+reg Y X [aw=weights] if (X <= `opt_i' & X >=0) 
+matrix coef_right = e(b)
+matrix var_right = e(V)
+scalar intercept_right = coef_right[1, 2]
+
+* Compute the RD effect as rd = right - left
+scalar difference = intercept_right - intercept_left
+matrix var_conventional = var_left + var_right
+scalar se_difference = sqrt(var_conventional[2,2])
+
+scalar list difference
+scalar list se_difference
+
+* Estimation with weights
+reg Y X [aw = weights] if X >= -`opt_i' & X < 0
+matrix coef_left = e(b)
+matrix var_left = e(V)
+scalar intercept_left = coef_left[1, 2]
+
+reg Y X [aw = weights] if X >= 0 & X <= `opt_i'
+matrix coef_right = e(b)
+matrix var_right = e(V)
+scalar intercept_right = coef_right[1, 2]
+
+scalar difference = intercept_right - intercept_left
+matrix var_conventional = var_left + var_right
+scalar se_difference = sqrt(var_conventional[2,2])
+
+scalar list difference
+*difference =  3.0195263
+scalar list se_difference
+*se_difference =  1.1676311
+
+*We re-run the regression performed in point (h)
+rdrobust Y X, p(1) kernel(triangular)
+
+*Now, we obtain the same treatment effect coefficients. 
 
 
 *(k)
+rdrobust Y X, all kernel(triangular) p(1) 
+local opt_i = e(h_l)
+
+local bwd050 = 0.5*`opt_i'
+local bwd075 = 0.75*`opt_i'
+local bwd125 = 1.25*`opt_i'
+local bwd15 = 1.5*`opt_i'
+
+di `opt_i' 
+di `bwd050' 
+di `bwd075' 
+di `bwd125' 
+di `bwd15'
+
+matrix define R = J(5, 6, .)
+global bandwidths "`opt_i' `bwd050' `bwd075' `bwd125' `bwd15'"
+local r = 1
+foreach k of global bandwidths {
+	rdrobust Y X, all kernel(triangular) p(1) h(`k')
+	matrix R[`r', 1] = `k'
+	matrix R[`r', 2] = e(tau_cl)
+	matrix R[`r', 3] = e(tau_bc)
+	matrix R[`r', 4] = e(se_tau_rb)
+	matrix R[`r', 5] = R[`r', 2] - invnormal(0.975) * R[`r', 4]
+	matrix R[`r', 6] = R[`r', 2] + invnormal(0.975) * R[`r', 4]
+	local r = `r' + 1
+}
+
+preserve
+	clear
+	svmat R
+	twoway (rcap R5 R6 R1, lcolor(navy)) /*
+	*/ (scatter R2 R1, mcolor(cranberry) yline(0, lcolor(black) lpattern(dash))), /*
+	*/ graphregion(color(white)) /*
+	*/ xlabel(8.6199686 12.929953 17.239937 21.549922 25.859906, labsize(small)) /*
+	*/ ytitle("RD Treatment Effect") /*
+	*/ legend(off) xtitle("Bandwidth") yscale(range(-5 10)) 
+	graph export "Graph_3.png", replace
+restore
+
+*ADD COMMENTS
 
 
 *(l)
+rddensity x, all
+*Conventional and robust method both indicate we cannot reject the null hypothesis of continuity of the alternative running variable x. 
+
+foreach i in -10 -5 5 10{
+	rddensity x, all c(`i')
+}
+*Futhermore, no significant discountinuity in the alternative running variable is found at the 4 alternatives of cut-off thresholds considered in point (f).
+
+local covariates "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
+
+foreach z in `covariates'{
+	local vlabel : variable label `z'
+	rdplot `z' x, graph_options(title(`vlabel', size(7pt)) xtitle(Alternative Running Variable, size(7pt)) ytitle(Covariate, size(7pt)) legend(off))
+	graph rename `z', replace
+}
+graph combine `covariates'
+graph export "Graph_4.png", replace
+*We find that no discountinuities of the covariates at the cut-off. 
+ 
+
+***Graphical analysis***
+rdplot T x, graph_options(title(T-x Discontinuity) ///
+	xtitle(Alternative Running Variable) ytitle(Treatment Variable)) 
+graph rename T_x, replace
+*Fuzzy RDD design. There is a discountinuous jump in the probability of treatment after the cutoff. 
+
+rdplot Y x, graph_options(title(Y-x Discontinuity) ///
+	xtitle(Alternative Running Variable) ytitle(Treatment Variable)) 
+graph rename Y_x, replace
+*The graph shows there is discontinuity in the outcome around the cutoff (?)
+	
+graph combine T_x Y_x
+graph export "Graph_5.png", replace
+
+
+
 
 
 **# EXERCISE 2
