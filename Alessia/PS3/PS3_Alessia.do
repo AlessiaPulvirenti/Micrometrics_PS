@@ -1,3 +1,21 @@
+					*******************************************
+					***										***
+					***		  Problem Set 3					***
+					***										***
+					***			GROUP 8						***	
+					***										***
+					***		Aleksa Mitrovic		3100079		***
+					***		Elena Neri			3070190		***
+					***		Alessia Pulvirenti	3060894		***
+					***		Tommaso Roccuzzo	3080613		***
+					***										***
+					*******************************************
+											
+
+*COMMANDS TO HAVE INSTALLED TO RUN THIS CODE
+
+/*ssc install ivreg2, replace
+
 net install rdrobust, ///
 from("https://raw.githubusercontent.com/rdpackages/rdrobust/master/stata") replace
 *
@@ -9,7 +27,9 @@ from("https://raw.githubusercontent.com/rdpackages/rddensity/master/stata") repl
 net install lpdensity, /// 
 from("https://raw.githubusercontent.com/nppackages/lpdensity/master/stata") replace
 
-*******************************************
+*/
+
+********************************************************************************************
 **# EXERCISE 1
 
 *(a)
@@ -17,42 +37,89 @@ use "pset_3.dta", clear
 
 rdplot T X, graph_options(xtitle(Running Variable) ytitle(Treatment Variable))
 
-//The current design is a sharp RDD, because the Treatment variable is a deterministic probability function (i.e., it takes either value 1 or 0) of the running variable. There is no partial compliance. 
+*** We immediately notice that the RD design is sharp and not fuzzy. At the cutoff value c = 0 for the running variable, the treatment variable T displays a clear and sharp discontinuity, jumping from 0 to 1. Hence, this is evidence of the fact that treatment assignment is a deterministic function of our covariate X, and in particular T = 0 for X < 0 and T = 1 for X > 0. ***
 
-*(b) ?????
-local covariates "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
+*(b) 
+global covariates = "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
+
+matrix Table1 = J(9, 4, .)
+
+local i = 1
+
+foreach var of varlist $covariates {
+	
+	qui rdrobust `var' X, kernel(triangular) p(1) bwselect(mserd)
+	 
+	matrix Table1[`i',1] = round(e(h_l), .001)
+	matrix Table1[`i',2] = round(e(tau_cl), .001)
+	matrix Table1[`i',3] = round(e(pv_rb), .001)
+	matrix Table1[`i',4] = round(e(N_h_l) + e(N_h_r), .001)
+	
+	local i = `i' + 1
+}
+
+matrix colnames Table1 = "MSE-Optimal Bandwidth" "RD Estimator" "p-value" "Effective Number of Observations"
+
+matrix list Table1
+
+
+foreach var of varlist $covariates {
+
+	local x : variable label `var'
+	
+	gen label_`var' = "`x'"
+	
+}
+
+putexcel set Table1.xlsx, replace
+
+putexcel A1 = "Variable"
+putexcel B1 = "Label"
+
+
+local i = 2
+foreach var of varlist $covariates{
+	putexcel B`i' = label_`var'
+	putexcel A`i' = "`var'"
+	drop label_`var'
+	local i = `i' + 1
+}
+
+putexcel C1=matrix(Table1), colnames
+
+
+
 
 *(c)
-foreach z in `covariates'{
-	local vlabel : variable label `z'
-	rdplot `z' X, graph_options(title(`vlabel', size(7pt)) xtitle(Running Variable, size(7pt)) ytitle(Covariate, size(7pt)) legend(off))
-	graph rename `z', replace
-}
-graph combine `covariates'
-graph export Graph_1.pdf, replace
+local i = 1
 
+foreach var of varlist $covariates{
+	local x : variable label `var'
+	local y : variable label X
+	qui rdplot `var' X, graph_options(title("RD plot for: `x'") ytitle("Dependent Variable: `var'") xtitle("Running Variable: X, `y'"))
+	graph save mygraph`i'.gph, replace
+	local i = `i' + 1
+}
+
+graph combine mygraph1.gph mygraph2.gph mygraph3.gph mygraph4.gph mygraph5.gph mygraph6.gph mygraph7.gph mygraph8.gph mygraph9.gph, iscale (*0.45)
+graph export Graph_1.png, replace
+
+* SHOULD WE ALSO SAVE GRAPHS IN PNG?
 
 *(d)
 * Histogram
-rdrobust Y X //Put here options of RD robust
-scalar h_left = -e(h_l)	//Lower bound of the sample used to estimate the polynomial
-scalar h_right = e(h_r)	//Upper bound of the sample used to estimate the polynomial
-twoway (histogram X if X >=h_left & X < 0, freq width(1) color(blue)) ///
-	(histogram X if X >= 0 & X <= h_right, freq width(1) color(green)), xlabel(-30(10)30) ///
-	graphregion(color(white)) xtitle(Score) ytitle(Number of Observations) legend(off)	///
-	xline(0)
-	
-graph rename histo, replace
-	
-*Plot of density (to check for manipulation)
-local h_l = h_left
-local h_r = h_right
-rddensity X, plot plot_range(`h_l' `h_r')
+qui rdrobust Y X, c(0) p(1) kernel(triangular) bwselect(mserd)
+scalar bw_h = e(h_l)
+scalar bw_l = -e(h_l)
 
-graph rename dens, replace
+twoway (histogram X if X < 0 & X > bw_l, freq width(1) color(blue)) (histogram X if X >= 0 & X < bw_h, freq width(1) color(red)), xlabel(-25(5)25) xline(0, lwidth(0.5) lcolor(green)) graphregion(color(white)) xtitle("Running Variable")  ytitle("Number of Observations") legend(off) title("Hystogram: frequency of obs. around the cutoff", size(4))
+graph save X_Y.gph, replace
 
-graph combine histo dens
-graph export Graph_2.pdf, replace
+rddensity X, plot graph_opt(xline(0, lwidth(0.5) lcolor(green)) legend(off) graphregion(color(white)) ytitle("Density") xtitle("Running Variable") title("Estimated Density of the Running Variable", size(4)))
+graph save density.gph, replace
+
+graph combine X_Y.gph density.gph, cols(1)
+graph export X_Y.png, replace
 
 *(e)
 rddensity X
@@ -75,16 +142,17 @@ forvalues i= -10(5)10{
 * Looking at the outcomes for all 4 alternatives of cut-off thresholds, we can see that we cannot reject the null hypothesis at a significance above 15% for three values of the four chosen. However, at a threshold of -5.0, the null hypothesis of CONTINUITY can be rejected with a p-value of 0.055, i.e., at a standard significance level of 10%. This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
 
 *(g)
-rdplot Y X, nbins(20 20) graph_options(xtitle(Running Variable) ytitle(Outcome))
+rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-20 y.o. woman vs Islamic vote margin in 1994", size(3)) ytitle("Outcome") xtitle("Running Variable"))
+
+* COMMENT? 
 
 *(h)Does electing a mayor from an Islamic party has a significant effect on the educational attainment of women? Do results differ significantly for different kernel choices?
 
-rdrobust Y X, p(1) kernel(uniform)
+rdrobust Y X, p(1) kernel(triangular) bwselect(mserd)
 
-rdrobust Y X, p(1) kernel(triangular)
-**
+rdrobust Y X, p(1) kernel(uniform) bwselect(mserd)
 
-//WRITE COMMENT HERE
+*yes, electing a mayor from an Islamic party has a statistically significant effect on the educational atteinment of women. Estimated coefficients and p-values are no significantly different under both kernels. 
 
 
 *(i)
@@ -268,11 +336,6 @@ graph rename Y_x, replace
 graph combine T_x Y_x
 graph export "Graph_5.png", replace
 
-
-
-
-
-**# EXERCISE 2
 
 **# EXERCISE 2
 
