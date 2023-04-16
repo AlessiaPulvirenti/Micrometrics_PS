@@ -274,11 +274,15 @@ graph export "Graph_5.png", replace
 
 **# EXERCISE 2
 
+**# EXERCISE 2
+
 use "fraud_pcenter_final.dta", clear
 
 *(a)
 
-*Generate the "adjusted" measure of distance, both for our proxied variable, _dist, and the dist variable used by Gonzales 2021. 
+* Generate the "adjusted" measure of distance, both for our proxied variable, _dist, and the dist variable used by Gonzales 2021, so that polling centres located in areas with coverage == 0, will have a negative distance from the cutoff. 
+
+replace _dist = -_dist if _dist < 0
 
 gen _temp=_dist
 replace _temp=-_dist if cov==0
@@ -286,25 +290,33 @@ replace _temp=-_dist if cov==0
 gen temp=dist
 replace temp=-dist if cov==0
 
+*RD plotting of the new running variable on the treatment variable
+
 *Polynomial of order 4
-rdplot cov _temp, graph_options(xtitle(New Running Variable) ytitle(Treatment Variable))
+rdplot cov _temp, graph_options(xtitle(Adjusted New Running Variable (_temp)) ytitle(Treatment Variable (Coverage)) title(RDplot of the New Running variable on Coverage))
 
 *Polynomial of order 1
-rdplot cov _temp , graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(1) kernel(triangular)
+rdplot cov _temp , graph_options(xtitle(Adjusted New Running Variable (_temp)) ytitle(Treatment Variable (Coverage)) title(RDplot of the New Running variable on Coverage)) c() p(1) kernel(triangular)
 
-*Polynomial of order 3
-rdplot cov _temp , graph_options(xtitle(New Running Variable) ytitle(Treatment Variable)) c() p(3) kernel(triangular)
-
+*RD plotting of the OLD running variable, used by Gonzales 2021, on the treatment variable
 rdplot cov temp, graph_options(xtitle(Old Running Variable from Gonzales 2021) ytitle(Treatment Variable)) 
-*Here, we perform RD plot using the adjusted distance variable directly from Gonzales (2021) - we can see, as written in the paper, that it is a sharp discontinuity. 
+*Here, we perform RD plot using the adjusted distance variable directly from Gonzales (2021) - from the graph it can be easily seen that the discontinuity is sharp. Indeed, Gonzales 2021 employs a sharp spatial regression discontinuity. 
 
-rdrobust vote_comb _temp, p(1) kernel(triangular) fuzzy(cov)
-rdrobust vote_comb_ind _temp, p(1) kernel(triangular) fuzzy(cov)
+* RD estimation using the new running variable: 
+rdrobust vote_comb _temp, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
+rdrobust vote_comb_ind _temp, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
 
 
-/* Looking at the RD plot of the treatment variable on the adjusted version _dist we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. On the other hand, by plotting coverage on the measure of distance used by the author, i.e., temp, we can see that the discontinuity is sharp. Indeed the Gonzales employs a one-dimensional sharp RDD. For his one-dimensional estimates to be valid, the following identification assumptions must hold: 
----> [WRITE HERE IDENTIFICATION ASSUMPTIONS]
+/* Looking at the RD plot of the treatment variable on the adjusted version of _dist we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. On the other hand, by plotting coverage on the measure of distance used by Gonzales, i.e., temp, we can see that the discontinuity is sharp. 
 
+Indeed the Gonzales employs a one-dimensional sharp RDD. For his one-dimensional estimates to be valid, the following identification assumptions must hold: 
+1. Continuity of potential outcomes at the cutoff point: the potential outcome functions must be continuous at 0, the selected 		cut-off point. In other words, absent the treatment, the potential outcome would not have jumped, i.e. there are no competing interventions at the boundary points. In Gonzales' setting, this assumption implies that polling centres characteristics must "transition" smoothly across the treatment boundary. In this way, centres in the non-coverage regions must be a valid counterfactual for centres in the coverage regions. 
+2. Assignment is free of manipulation: there must be no endogenous sorting of polling centers or sorting of villages near the boundary. To claim the validity of the RD design, the author performs the Cattaneo, Jansson, Ma's (2019) test for breaks in the density of the running variable at the treatment boundary. Moreover, Gonzales (2021) notes that the presence of endogenous sorting of polling centers is, in any case, unlikely, since polling centres location was decided by the location of settlements rather than cellphone coverage by the UN-led IEC. With regards to the endogenous sorting of villages, or of people in villages, Gonzales notes that because of the rapid expansion of cellphone coverage in Afghanistan, the incentives for a household to move to another village that had already cellphone coverage were very low. 
+
+Looking at the results of a preliminary fuzzy RD estimation performed with RD robust, we see that results are significant only when using the independent variable vote_comb, that is, share of votes under Category C fraud. In particular, cell-phone coverage decreases the share of votes by 11 percentage points [CHECK HERE AGAIN, ALSO THE INTERPRETATION]. On the other hand, although similar in magnitude, the results for vote_comb_ind 
+
+
+																	[NOTES]: 
 Moreover, Gonzales 2021 identifies some threats to identification: 
 --> [WRITE HERE THREATS TO IDENTIFICATION FROM THE ADDITIONAL RESULTS SECTION]
 * it must be that that the phone providers do not select where to locate based on characteristics which can also affect the level of fraud in elections, such as education levels, urbanisation levels, population density. 
@@ -313,19 +325,13 @@ Moreover, Gonzales 2021 identifies some threats to identification:
 */
 
 *(b)
-* The setting in which we would not have to change the (sharp) RD design used by Gonzales 2021 would be one in which the cell phone coverage boundaries are sharp. This would be the case if ... (mutually exclusive areas, no spillovers...) --> In this way we would obtain a sharp RD plot of the first stage, as when we plot rdplot cov temp. 
-
-
-
+* The case in which we would need to modify our RD design would be the one in which there are spillovers and spatial displacement of fraud (we could not label coverage boundary as "sharp" in this case) that lead to a downward bias of estimates presented in Gonzalez's Table 2. In the "Mobile Coverage Spillovers and Spatial Displacement of Fraud" part of the Additional Results section, Gonzalez introduces bands of 2km, 4km, 6km and 8km on the non-coverage side to estimate the likelihood of fraud in these non-overlapping regions. He found no statistically significant spikes nor drops in fraud measures in comparison to areas just outside the band, meaning that the coverage boundary "remains" sharp. For these reasons, we should not worry about our proxy leading to a bias in the estimates, provided that the absolute difference between true longitude and observed proxy is less than the length of the bands. 
 
 
 
 *(c)
 
-
-*Optimal Bandwidth
-
-*Our dist variable takes already into account the fact that negative values of the variable indicate those that are in non-covered areas, so we do not need to create a temp variable to compute the optimal bandwidth. 
+*We first compute the Optimal Bandwidth
 
 foreach var in /*600 95 ecc*/ comb comb_ind {
 		rdbwselect vote_`var' _temp if ind_seg50==1, vce(cluster segment50)
@@ -336,54 +342,104 @@ foreach var in /*600 95 ecc*/ comb comb_ind {
 	}
 }
 
+
+* Control means
+*In the optimal bandwidth
+foreach var in /*600 95 ecc*/ comb comb_ind {
+		sum vote_`var' if (cov==0 & ind_seg50==1 & _dist<=hopt_`var')
+		scalar mean_`var'=r(mean)
+		forvalues r=1/2 {
+			sum vote_`var' if (cov==0 & ind_seg50==1 & _dist<=hopt_`var'_`r' & region2==`r')
+			scalar mean_`var'_`r'=r(mean)
+	}
+}
+*All observations
+foreach var in /*600 95 ecc*/ comb comb_ind {
+		sum vote_`var' if (cov==0 & ind_seg50==1)
+		scalar mean_`var'_all=r(mean)
+		forvalues r=1/2 {
+			sum vote_`var' if (cov==0 & ind_seg50==1 & region2==`r')
+			scalar mean_`var'_`r'_all=r(mean)
+	}
+}
+
 xtset, clear
 xtset segment50 pccode
 
 
 ********************************************************************************
-* 		B. Local Linear Regression (using distance as forcing variable)
+*  Local Linear Regression (using distance as forcing variable)
 ********************************************************************************
 
+* In order to replicate the estimation performed by Gonzales (2021), but in the context of a Fuzzy Regression Discontinuity Design, we need to perform an IV estimation of the specification used by Gonzales in eq. (1) of his paper, where the running variable _dist is used as an instrument for the treatment variable coverage, cov. We perform this estimation with the command xtvireg, which allows us to perform 2SLS estimation for panel data models, allowing us to include segment fixed effect. 
+
+* To perform IV estimation of eq. (1) of Gonzales 2021, we generate a dummy variable Z_i = 1(_temp >= 0), i.e., and indicator that takes value of 1 if our running variable _dist is greater or equal than the cutoff, 0. Moreover, we create the interaction term between our running variable _dist and the treatment variable, and the instrument for it. 
+
+* Generate the dummy to instrument the treatment variable cov
+gen z =0
+replace z = 1 if _dist >= 0
+
+* Generate interaction term between running variable and treatment variable
+gen _tc = _dist*cov
+
+* Generate the interaction term between the running variable and the instrument of cov, to instrument the interaction
+gen _tz = _dist*z
+
+* The need to create the interaction term and and the instrument for it, arises from the fact that the specification that Gonzales performes with xtreg: xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var', fe robust, is incompatibile with xtivreg. 
+
+
+* We use the newly created variable to perform IV estimations of the specification of eq. (1)
 foreach var in comb_ind comb {	
 	* All regions
-	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var', fe robust 
-		est store col1_a_`var'
-		est title: "\makecell{All Regions\\ (1)}"
+	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var', fe vce(robust)
 		est store col1_a_`var'
 		label variable _est_col1_a_`var' "All regions"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_all
+		estadd scalar Gr = e(N_clust)
+		
 		
 	* Southeast
-	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
-	region2==1, fe robust 
-		est store col1_b_`var'
-		est title:  "\makecell{Southeast\\(3)}"
+	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var'_1 & ///
+	region2==1, fe vce(robust) 
 		est store col1_b_`var'
 		label variable _est_col1_b_`var' "Southeast"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_1_all
+		estadd scalar Gr = e(N_clust)
 
 	* Northwest
-	xtreg vote_`var' cov##c.(_temp) if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
-	region2==2, fe robust 
-		est store col1_c_`var'
-		est title: "\makecell{Northwest\\(5)}"
+	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var'_2 & ///
+	region2==2, fe vce(robust) 
 		est store col1_c_`var'
 		label variable _est_col1_c_`var' "Northwest"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_2_all
+		estadd scalar Gr = e(N_clust)
  }
  
+* Using esttab to output the TeX code of two tables, to be then combined in a unique TeX table with the code by Steve Of Connel retrieved from github (https://github.com/steveofconnell/PanelCombine/blob/master/ExampleUse.do): 
 
-* Putting the table together - Wide version with esttab
 esttab col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
 using "results_onedim_a.tex", replace style(tex) ///
 star(* 0.10 ** 0.05 *** 0.01) ///
-keep(1.cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label title("Table 2 - EFFECT OF CELLPHONE COVERAGE ON CATEGORY C FRAUD") eqlabels(none) nonotes
+keep(cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label title("Table 2 - EFFECT OF CELLPHONE COVERAGE ON CATEGORY C FRAUD") eqlabels(none) nonotes
 
 esttab col1_a_comb  col1_b_comb  col1_c_comb  ///
 using "results_onedim_b.tex", replace style(tex) ///
 cells(b(star fmt(3)) se(par fmt(3))) star(* 0.10 ** 0.05 *** 0.01) ///
-keep(1.cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label eqlabels(none) nonotes
-
+keep(cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label eqlabels(none) nonotes
 
 include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/PanelCombineSutex.do"
 panelcombinesutex, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles("At least one station with Category C fraud" "Share of votes under Category C fraud") save(combined_table.tex) addcustomnotes("\begin{minipage}{`linewidth'\linewidth} \footnotesize \smallskip \textbf{Note:} Table shows summary statistics for cars in different estimation samples.\end{minipage}" )
+
+* Looking at the estimates obtained through xtivreg, we note that as in the case of Gonzales 2021, the results are statistically and economically significant only when analysing All Regions together and Southeast regions. This is justified by the author with the fact that in the Northwestern regions of the country the levels of fraud were much lower relative to the Southeastern ragions. In terms of magnitude, in the case of All regions, we can see a drop of fraud levels of about XX [INSERT HERE THE VALUE] percentage points. For the Southeast region, the drop in fraud levels for polling centres inside the coverage area within the optimal bandwidth is instead of XX [INSERT HERE THE VALUE] percentage points. 
+
+* Alternatively, we use the estout command as done by Gonzales in his replication package, to obtaine the two separated tables: 
+*[TO DO HERE!]
+
+
+
 
 
 ****OTHER (FAILED) ATTEMPTS
