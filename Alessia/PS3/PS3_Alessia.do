@@ -32,6 +32,7 @@ from("https://raw.githubusercontent.com/nppackages/lpdensity/master/stata") repl
 ********************************************************************************************
 **# EXERCISE 1
 
+cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\PS\problem set 3"
 *(a)
 use "pset_3.dta", clear
 
@@ -166,25 +167,24 @@ gen X_T_2 = T*X_2
 gen X_T_3 = T*X_3
 gen X_T_4 = T*X_4
 
-* Estimate global regression, fitting a polynomial of order 4 on our outcome.
+* We estimate the effect of T on Y using a global approach, fitting a polynomial of order 4.
 reg Y T ///
 X X_2 X_3 X_4 ///
 X_T X_T_2 X_T_3 X_T_4
 
 
 *(j)
-* We estimate the effect of T on Y but using a local approach and save the optimal bandwidth, obtained via *rdrobust*'s mserd bandwidth, in a local:
+* We estimate the effect of T on Y using a local approach and save the optimal bandwidth, obtained via *rdrobust*'s mserd bandwidth, in a local:
 rdrobust Y X, all kernel(triangular) bwselect(mserd)
 local opt_i = e(h_l)
 
-*Local approach: 
-* Left of the cut-off
+*Estimating the local polynomial regression of order 4	on the left of the cut-off
 reg Y X if X >=-`opt_i' & X < 0 
 matrix coef_left = e(b)
 matrix var_left = e(V)
 scalar intercept_left = coef_left[1, 2]
 
-* Right of the cut-off
+*Estimating the local polynomial regression of order 4 on the right of the cut-off
 reg Y X if X >= 0 & X <=`opt_i'
 matrix coef_right = e(b)
 matrix var_right = e(V)
@@ -202,10 +202,9 @@ scalar list se_difference
 *We re-run the regression performed in point (h)
 rdrobust Y X, p(1) kernel(triangular)
 
-*We get different results. The coefficient obtained with rdrobust is 3.0595105, whereas the one obtained in (h) is 3.0195. ADD WHY!!!!
-
-***EXTRA - replicating *rdrobust*'s estimates under a triangular kernel***
-* To obtain the same coefficient obtained in point (h), we have to run a WLS with weights defined according to the triangular kernel formula. 
+*By estimating the effect of T on Y using a local approach we get different results with respect to those obtained in (h). The treatment effect coefficient obtained with rdrobust is 3.0595105, whereas the one obtained in (h) is 3.0195. 
+*To obtain point (h) *rdrobust*'s estimates under a triangular kernel, we have to run a WLS with weights defined according to the triangular kernel formula. As oppose to the uniform kernel and OLS, the triangular kernel produces local polynomial estimators using non-uniform weights, assigning greater weights to observations closer to the cut-off. 
+*We run also the WLS with the weights to show how to obtain the same result found in (h). 
 
 * Generating the weights
 gen weights = .
@@ -251,13 +250,14 @@ scalar list difference
 scalar list se_difference
 *se_difference =  1.1676311
 
-*We re-run the regression performed in point (h)
+*We re-run the regression performed in (h)
 rdrobust Y X, p(1) kernel(triangular)
 
-*Now, we obtain the same treatment effect coefficients. 
+*As expected we obtain the same treatment effect coefficient as the one obtained in (h). 
 
 
 *(k)
+*We obtain and store in the local "opt_i" the optimal bandwidths obtained in (h) and re-run the RD using it and alternative bandwidths (also save in locals). 
 rdrobust Y X, all kernel(triangular) p(1) 
 local opt_i = e(h_l)
 
@@ -292,14 +292,14 @@ preserve
 	twoway (rcap R5 R6 R1, lcolor(navy)) /*
 	*/ (scatter R2 R1, mcolor(cranberry) yline(0, lcolor(black) lpattern(dash))), /*
 	*/ graphregion(color(white)) /*
-	*/ xlabel(8.6199686 12.929953 17.239937 21.549922 25.859906, labsize(small)) /*
+	*/ xlabel(8.62 12.93 17.24 21.55 25.86, labsize(small)) /*
 	*/ ytitle("RD Treatment Effect") /*
 	*/ legend(off) xtitle("Bandwidth") yscale(range(-5 10)) 
 	graph export "Graph_3.png", replace
 restore
 
-*ADD COMMENTS
-
+*The plot of the five RD estimates indicates results are quite robust to alternative bandwidths: results are similar in magnitude, ranging from 1.8047 (bandwith 0.5*opt_i) and 3.0195 (bandwith opt_i). Increasing the bandwidths increases the sample size, and consequently increases the precision of the estimates obtained. This is why we observe narrower confidence intervals as the bandwidths increase (bandwith 0.5*opt_i estimate's confidence interval is the largest and not significantly different from zero). However, in a RD setting we must keep in mind the existing trade-off between greater sample size improving precision and internal validity. 
+*Overall ROBUST OR NOT (?)
 
 *(l)
 rddensity x, all
