@@ -354,6 +354,7 @@ rdrobust Y x, fuzzy(T) bwselect(mserd)
 
 **# EXERCISE 2
 
+cd "C:\Users\pulvi\OneDrive - Università Commerciale Luigi Bocconi\Depr(ESS)ion\2. Second Year\Micrometrics\PS\PS 3"
 use "fraud_pcenter_final.dta", clear
 
 *(a)
@@ -366,7 +367,7 @@ replace _temp=-_dist if cov==0
 gen temp=dist
 replace temp=-dist if cov==0
 
-*RD plotting of the new running variable on the treatment variable
+*RD plotting of the treatment variable, cov, on the new adjusted running variable, _temp
 
 *Polynomial of order 4
 rdplot cov _temp, graph_options(xtitle(Adjusted New Running Variable (_temp)) ytitle(Treatment Variable (Coverage)) title(RDplot of the New Running variable on Coverage))
@@ -374,14 +375,15 @@ rdplot cov _temp, graph_options(xtitle(Adjusted New Running Variable (_temp)) yt
 *Polynomial of order 1
 rdplot cov _temp , graph_options(xtitle(Adjusted New Running Variable (_temp)) ytitle(Treatment Variable (Coverage)) title(RDplot of the New Running variable on Coverage)) c() p(1) kernel(triangular)
 
-*RD plotting of the OLD running variable, used by Gonzales 2021, on the treatment variable
+*RD plotting of the "OLD" adjusted running variable, used by Gonzales 2021, on the treatment variable
 rdplot cov temp, graph_options(xtitle(Old Running Variable from Gonzales 2021) ytitle(Treatment Variable)) 
 *Here, we perform RD plot using the adjusted distance variable directly from Gonzales (2021) - from the graph it can be easily seen that the discontinuity is sharp. Indeed, Gonzales 2021 employs a sharp spatial regression discontinuity. 
 
 * RD estimation using the new running variable: 
-rdrobust vote_comb _temp, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
 rdrobust vote_comb_ind _temp, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
+rdrobust vote_comb _temp, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
 
+rdrobust vote_comb_ind _dist, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
 rdrobust vote_comb _dist, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
 
 
@@ -391,31 +393,25 @@ Indeed the Gonzales employs a one-dimensional sharp RDD. For his one-dimensional
 1. Continuity of potential outcomes at the cutoff point: the potential outcome functions must be continuous at 0, the selected 		cut-off point. In other words, absent the treatment, the potential outcome would not have jumped, i.e. there are no competing interventions at the boundary points. In Gonzales' setting, this assumption implies that polling centres characteristics must "transition" smoothly across the treatment boundary. In this way, centres in the non-coverage regions must be a valid counterfactual for centres in the coverage regions. 
 2. Assignment is free of manipulation: there must be no endogenous sorting of polling centers or sorting of villages near the boundary. To claim the validity of the RD design, the author performs the Cattaneo, Jansson, Ma's (2019) test for breaks in the density of the running variable at the treatment boundary. Moreover, Gonzales (2021) notes that the presence of endogenous sorting of polling centers is, in any case, unlikely, since polling centres location was decided by the location of settlements rather than cellphone coverage by the UN-led IEC. With regards to the endogenous sorting of villages, or of people in villages, Gonzales notes that because of the rapid expansion of cellphone coverage in Afghanistan, the incentives for a household to move to another village that had already cellphone coverage were very low. 
 
-Looking at the results of a preliminary fuzzy RD estimation performed with RD robust, we see that results are significant only when using the independent variable vote_comb, that is, share of votes under Category C fraud. In particular, cell-phone coverage decreases the share of votes by 11 percentage points [CHECK HERE AGAIN, ALSO THE INTERPRETATION]. On the other hand, although similar in magnitude, the results for vote_comb_ind 
+As to the preliminary RD estimation we perform with RD robust, we use 2 running variables: 
+1) _temp, which is the "adjusted" measure of _dist
+2) _dist, our proxied, and noisy, measure of distance
 
-
-																	[NOTES]: 
-Moreover, Gonzales 2021 identifies some threats to identification: 
---> [WRITE HERE THREATS TO IDENTIFICATION FROM THE ADDITIONAL RESULTS SECTION]
-* it must be that that the phone providers do not select where to locate based on characteristics which can also affect the level of fraud in elections, such as education levels, urbanisation levels, population density. 
-
-* In his "Additional Results" section, Gonzales (2021) provides evidence of the fact that selection into coverage is not a cause of concern for the one-dimensional RD design adopted. Another threat to identification is Mobile Coverage Spillovers and Spatial Displacement of Fraud. Coverage in one area can lead to positive spillovers in another area which is officially considered as "uncovered". In particular, and this emerges from our RD plot using the distance measure with proxied latitude, spillovers can result from a coverage boundary which is not sharp. This could be the case if polling centers in non-coverage areas (at the boundary of non-coverage areas) can still benefit from coverage from close areas. If this were to be the case, than non-coverage areas can have lower level of fraud because they benefitted from coverage from other areas. This could downward bias the one-dimensional estimates that Gonzales (2021) shows in Table 2 of page 18 of the paper. A proper fuzzy RDD design cannot be implemented by Gonzales because we are not sure if these polling centers acyally benefitted from some coverage from the neighbouring centers (in that case, they would be non-compliers but we cannot ascertain that). ANOTHER THREAT IS... [CONTINUE]
+Looking at the results of RD estimation with the variable temp, we obtain qualitatively negative coefficients, significant at 10% level only for the outcome variable vote_comb (the share of votes under category C fraud). This result is in line with what found by Gonzales (2021) in table 2. On the other hand, using our noisy _dist variable, the coefficients are qualitatively positive (and enormous), as well as non-significant. This is due to the fact that RDrobust is implementing the first stage using _dist as running variable, which has a very low, and non-significant first stage with the treatment variable cov by design. 
 */
 
 *(b)
 * The case in which we would need to modify our RD design would be the one in which there are spillovers and spatial displacement of fraud (we could not label coverage boundary as "sharp" in this case) that lead to a downward bias of estimates presented in Gonzalez's Table 2. In the "Mobile Coverage Spillovers and Spatial Displacement of Fraud" part of the Additional Results section, Gonzalez introduces bands of 2km, 4km, 6km and 8km on the non-coverage side to estimate the likelihood of fraud in these non-overlapping regions. He found no statistically significant spikes nor drops in fraud measures in comparison to areas just outside the band, meaning that the coverage boundary "remains" sharp. For these reasons, we should not worry about our proxy leading to a bias in the estimates, provided that the absolute difference between true longitude and observed proxy is less than the length of the bands. 
-
-
 
 *(c)
 
 *We first compute the Optimal Bandwidth
 
 foreach var in /*600 95 ecc*/ comb comb_ind {
-		rdbwselect vote_`var' _temp if ind_seg50==1, vce(cluster segment50)
+		rdbwselect vote_`var' _temp if ind_seg50==1, vce(cluster segment50) fuzzy(cov) //Add the option fuzzy because we are performing a fuzzy RDD
 		scalar hopt_`var'=e(h_mserd)
 		forvalues r=1/2 {
-			rdbwselect vote_`var' _temp if ind_seg50==1 & region2==`r', vce(cluster segment50)
+			rdbwselect vote_`var' _temp if ind_seg50==1 & region2==`r', vce(cluster segment50) fuzzy(cov)
 			scalar hopt_`var'_`r'=e(h_mserd)
 	}
 }
@@ -445,20 +441,20 @@ xtset, clear
 xtset segment50 pccode
 
 
-********************************************************************************
+*****************************************************************
 *  Local Linear Regression (using distance as forcing variable)
-********************************************************************************
+*****************************************************************
 
 * In order to replicate the estimation performed by Gonzales (2021), but in the context of a Fuzzy Regression Discontinuity Design, we need to perform an IV estimation of the specification used by Gonzales in eq. (1) of his paper, where the running variable _dist is used as an instrument for the treatment variable coverage, cov. We perform this estimation with the command xtvireg, which allows us to perform 2SLS estimation for panel data models, allowing us to include segment fixed effect. 
 
-* To perform IV estimation of eq. (1) of Gonzales 2021, we generate a dummy variable Z_i = 1(_temp >= 0), i.e., and indicator that takes value of 1 if our running variable _dist is greater or equal than the cutoff, 0. Moreover, we create the interaction term between our running variable _dist and the treatment variable, and the instrument for it. 
+* To perform IV estimation of eq. (1) of Gonzales 2021, we generate a dummy variable z_i = 1(_temp >= 0), i.e., and indicator that takes value of 1 if our running variable _dist is greater or equal than the cutoff, 0. Moreover, we create the interaction term between our running variable _dist and the treatment variable, and the instrument for it. 
 
 
-
-*USING VARIABLE _DIST
-
+*****************************************************************
+*		USING VARIABLE _dist AS RUNNING VARIABLE
+*****************************************************************
 * Generate the dummy to instrument the treatment variable cov
-gen z =0
+gen z = 0
 replace z = 1 if _dist >= 0
 
 * Generate interaction term between running variable and treatment variable
@@ -473,7 +469,7 @@ gen _tz = _dist*z
 * We use the newly created variable to perform IV estimations of the specification of eq. (1)
 foreach var in comb_ind comb {	
 	* All regions
-	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var', fe vce(robust)
+	xtivreg vote_`var' _dist (cov _tc = z _tz)  if (ind_seg50==1 & _dist<=hopt_`var'), fe vce(robust)
 		est store col1_a_`var'
 		label variable _est_col1_a_`var' "All regions"
 		estadd scalar Obs = e(N)
@@ -501,16 +497,18 @@ foreach var in comb_ind comb {
  }
  
  
-* USING VARIABLE _TEMP
+*****************************************************************
+*		USING VARIABLE _temp AS RUNNING VARIABLE
+*****************************************************************
 * Generate the dummy to instrument the treatment variable cov
-gen z =0
-replace z = 1 if _tempp >= 0
+gen z_ = 0
+replace z_ = 1 if _temp >= 0
 
 * Generate interaction term between running variable and treatment variable
-gen _tc = _tempp*cov
-_tempp
+gen _tc_ = _temp*cov
+
 * Generate the interaction term between the running variable and the instrument of cov, to instrument the interaction
-gen _tz = _tempp*z
+gen _tz_ = _temp*z
 
 * The need to create the interaction term and and the instrument for it, arises from the fact that the specification that Gonzales performes with xtreg: xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var', fe robust, is incompatibile with xtivreg. 
 
@@ -518,7 +516,7 @@ gen _tz = _tempp*z
 * We use the newly created variable to perform IV estimations of the specification of eq. (1)
 foreach var in comb_ind comb {	
 	* All regions
-	xtivreg vote_`var' _temp (cov _tc = z _tz)  if ind_seg50==1 & _temp<=hopt_`var', fe vce(robust)
+	xtivreg vote_`var' _temp (cov _tc_ = z_ _tz_)  if ind_seg50==1 & _temp<=hopt_`var', fe vce(robust)
 		est store col1_a_`var'
 		label variable _est_col1_a_`var' "All regions"
 		estadd scalar Obs = e(N)
@@ -527,7 +525,7 @@ foreach var in comb_ind comb {
 		
 		
 	* Southeast
-	xtivreg vote_`var' _temp (cov _tc = z _tz)  if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
+	xtivreg vote_`var' _temp (cov _tc_ = z_ _tz_)  if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
 	region2==1, fe vce(robust) 
 		est store col1_b_`var'
 		label variable _est_col1_b_`var' "Southeast"
@@ -536,18 +534,22 @@ foreach var in comb_ind comb {
 		estadd scalar Gr = e(N_clust)
 
 	* Northwest
-	xtivreg vote_`var' _temp (cov _tc = z _tz)  if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
+	xtivreg vote_`var' _temp (cov _tc_ = z_ _tz_)  if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
 	region2==2, fe vce(robust)
 		est store col1_c_`var'
 		label variable _est_col1_c_`var' "Northwest"
 		estadd scalar Obs = e(N)
 		estadd scalar Mean = mean_`var'_2_all
 		estadd scalar Gr = e(N_clust)
- }
- 
+}
+
+* Looking at the estimates obtained through xtivreg, again we have performed the RD estimation using first _dist as running variable, and then _temp. 
+
+*Using _dist as running variable, as seen in the previous results with the command rdrobust, the coefficients are extremely large and non-significant. Again, this might be due to the nature of the variable, which is noisy and thus not strongly correlated with the instrument, z.  
+
+*On the other hand, using _temp as the running variable, we obtain similar results as Gonzales 2021. Indeed, as in the original sharp design, the coefficient are statistically and economically significant only when analysing All Regions together and Southeast regions. This is justified by the author with the fact that in the Northwestern regions of the country the levels of fraud were much lower relative to the Southeastern ragions. In terms of magnitude, in the case of All regions, we can see a drop in the outcome variable vote_comb_ind (At least one Station with category C fraud) of about 10 percentage points. For the Southeast region, the drop in the same outcome for polling centres inside the coverage area within the optimal bandwidth is instead of 27 percentage points. Looking at the outcome variable of Panel B of Table 2, "Share of votes under Category C fraud", the drops in All Region analysis and in Southeast region are of 10 percentage points and 21 percentage points, respectively. 
 
 
- 
 * Using esttab to output the TeX code of two tables, to be then combined in a unique TeX table with the code by Steve Of Connel retrieved from github (https://github.com/steveofconnell/PanelCombine/blob/master/ExampleUse.do): 
 
 esttab col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
@@ -563,9 +565,9 @@ keep(cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\
 include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/PanelCombineSutex.do"
 panelcombinesutex, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles("At least one station with Category C fraud" "Share of votes under Category C fraud") save(combined_table.tex) addcustomnotes("\begin{minipage}{`linewidth'\linewidth} \footnotesize \smallskip \textbf{Note:} Table shows summary statistics for cars in different estimation samples.\end{minipage}" )
 
-* Looking at the estimates obtained through xtivreg, we note that as in the case of Gonzales 2021, the results are statistically and economically significant only when analysing All Regions together and Southeast regions. This is justified by the author with the fact that in the Northwestern regions of the country the levels of fraud were much lower relative to the Southeastern ragions. In terms of magnitude, in the case of All regions, we can see a drop of fraud levels of about XX [INSERT HERE THE VALUE] percentage points. For the Southeast region, the drop in fraud levels for polling centres inside the coverage area within the optimal bandwidth is instead of XX [INSERT HERE THE VALUE] percentage points. 
 
 * Alternatively, we use the estout command as done by Gonzales in his replication package, to obtaine the two separated tables: 
+
 *[TO DO HERE!]
 
 
@@ -591,6 +593,7 @@ outreg [col1_a_comb_* col1_b_comb_* col1_c_comb_*] using Table2_rep.xls, excel k
 
 outreg2 [col1_a_comb  col1_b_comb  col1_c_comb] using Table2_rep.xls, excel keep(1.cov) nocons label() title("Panel B - Share of votes under Category C fraud") nor2 noni noobs replace
 */
+
 
 
 
