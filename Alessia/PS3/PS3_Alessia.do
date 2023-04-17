@@ -32,10 +32,7 @@ from("https://raw.githubusercontent.com/nppackages/lpdensity/master/stata") repl
 *******************************************
 **# EXERCISE 1
 
-cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\PS\problem set 3"
 *(a)
-use "pset_3.dta", clear
-
 rdplot T X, graph_options(xtitle(Running Variable) ytitle(Treatment Variable))
 
 *** We immediately notice that the RD design is sharp and not fuzzy. At the cutoff value c = 0 for the running variable, the treatment variable T displays a clear and sharp discontinuity, jumping from 0 to 1. Hence, this is evidence of the fact that treatment assignment is a deterministic function of our covariate X, and in particular T = 0 for X < 0 and T = 1 for X > 0. ***
