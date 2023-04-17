@@ -171,8 +171,190 @@ rdrobust Y X, p(1) kernel(triangular)
 
 
 *(i)
+* We generate variables to fit a polynomial of order 4.
+gen X_2 = X^2
+gen X_3 = X^3
+gen X_4 = X^4
+
+*We define triangular weights globally
+gen glob_weights = .
+replace glob_weights = (1 - abs(X/100)) if X < 0 
+replace glob_weights = (1 - abs(X/100)) if X >= 0 
+
+*We estimate the global polynomial regression of order 4 on the left of the cut-off
+reg Y X X_2 X_3 X_4  [aw = glob_weights] if X < 0
+matrix coef_left = e(b)
+scalar intercept_left = coef_left[1, 5]	
+
+*We estimate the global polynomial regression of order 4 on the right of the cut-off
+reg Y X X_2 X_3 X_4  [aw = glob_weights] if X >= 0 
+matrix coef_right = e(b)
+scalar intercept_right = coef_right[1, 5]
+
+scalar global_difference = intercept_right - intercept_left
+display global_difference
+*3.0202449
+
+*We re-run the regression performed in point (h)
+rdrobust Y X, p(4) kernel(triangular) h(100 100) 
+
+*We obtain the same treatment effect coefficient obtained in (h). 
 
 
+*(j)
+* We estimate the effect of T on Y using a local approach and save the optimal bandwidth, obtained via *rdrobust*'s mserd bandwidth, in a local:
+rdrobust Y X, all kernel(triangular) bwselect(mserd)
+local opt_i = e(h_l)
+
+*Estimating the local polynomial regression of order 4	on the left of the cut-off
+reg Y X if X >=-`opt_i' & X < 0 
+matrix coef_left = e(b)
+matrix var_left = e(V)
+scalar intercept_left = coef_left[1, 2]
+
+*Estimating the local polynomial regression of order 4 on the right of the cut-off
+reg Y X if X >= 0 & X <=`opt_i'
+matrix coef_right = e(b)
+matrix var_right = e(V)
+scalar intercept_right = coef_right[1, 2]
+
+scalar difference = intercept_right - intercept_left
+matrix var_conventional = var_left + var_right
+scalar se_difference = sqrt(var_conventional[2,2])
+
+scalar list difference
+*difference =  3.0595105
+scalar list se_difference
+*se_difference =  1.2974771
+
+*We re-run the regression performed in point (h)
+rdrobust Y X, p(1) kernel(triangular)
+
+*By estimating the effect of T on Y using a local approach we get different results with respect to those obtained in (h). The treatment effect coefficient obtained with rdrobust is 3.0595105, whereas the one obtained in (h) is 3.0195. 
+*To obtain point (h) *rdrobust*'s estimates under a triangular kernel, we have to run a WLS with weights defined according to the triangular kernel formula. As oppose to the uniform kernel and OLS, the triangular kernel produces local polynomial estimators using non-uniform weights, assigning greater weights to observations closer to the cut-off. 
+*We run also the WLS with the weights to show how to obtain the same result found in (h). 
+
+* Generating the weights
+gen weights = .
+replace weights = (1 - abs(X/`opt_i')) if X < 0 & X >= -`opt_i'
+replace weights = (1 - abs(X/`opt_i')) if X >= 0 & X <= `opt_i'
+
+reg Y X [aw=weights] if X < 0 & X >= -`opt_i'
+matrix coef_left = e(b)
+matrix var_left = e(V)
+scalar intercept_left = coef_left[1, 2]
+
+*Right
+reg Y X [aw=weights] if (X <= `opt_i' & X >=0) 
+matrix coef_right = e(b)
+matrix var_right = e(V)
+scalar intercept_right = coef_right[1, 2]
+
+* Compute the RD effect as rd = right - left
+scalar difference = intercept_right - intercept_left
+matrix var_conventional = var_left + var_right
+scalar se_difference = sqrt(var_conventional[2,2])
+
+scalar list difference
+scalar list se_difference
+
+* Estimation with weights
+reg Y X [aw = weights] if X >= -`opt_i' & X < 0
+matrix coef_left = e(b)
+matrix var_left = e(V)
+scalar intercept_left = coef_left[1, 2]
+
+reg Y X [aw = weights] if X >= 0 & X <= `opt_i'
+matrix coef_right = e(b)
+matrix var_right = e(V)
+scalar intercept_right = coef_right[1, 2]
+
+scalar difference = intercept_right - intercept_left
+matrix var_conventional = var_left + var_right
+scalar se_difference = sqrt(var_conventional[2,2])
+
+scalar list difference
+*difference =  3.0195263
+scalar list se_difference
+*se_difference =  1.1676311
+
+*We re-run the regression performed in (h)
+rdrobust Y X, p(1) kernel(triangular)
+
+*As expected we obtain the same treatment effect coefficient obtained in (h). 
+
+
+*(k)
+*We obtain and store in the local "opt_i" the optimal bandwidths obtained in (h) and re-run the RD using it and alternative bandwidths (also save in locals). 
+rdrobust Y X, all kernel(triangular) p(1) 
+local opt_i = e(h_l)
+
+local bwd050 = 0.5*`opt_i'
+local bwd075 = 0.75*`opt_i'
+local bwd125 = 1.25*`opt_i'
+local bwd15 = 1.5*`opt_i'
+
+di `opt_i' 
+di `bwd050' 
+di `bwd075' 
+di `bwd125' 
+di `bwd15'
+
+matrix define R = J(5, 6, .)
+global bandwidths "`opt_i' `bwd050' `bwd075' `bwd125' `bwd15'"
+local r = 1
+foreach k of global bandwidths {
+	rdrobust Y X, all kernel(triangular) p(1) h(`k')
+	matrix R[`r', 1] = `k'
+	matrix R[`r', 2] = e(tau_cl)
+	matrix R[`r', 3] = e(tau_bc)
+	matrix R[`r', 4] = e(se_tau_rb)
+	matrix R[`r', 5] = R[`r', 2] - invnormal(0.975) * R[`r', 4]
+	matrix R[`r', 6] = R[`r', 2] + invnormal(0.975) * R[`r', 4]
+	local r = `r' + 1
+}
+
+preserve
+	clear
+	svmat R
+	twoway (rcap R5 R6 R1, lcolor(navy)) /*
+	*/ (scatter R2 R1, mcolor(cranberry) yline(0, lcolor(black) lpattern(dash))), /*
+	*/ graphregion(color(white)) /*
+	*/ xlabel(8.62 12.93 17.24 21.55 25.86, labsize(small)) /*
+	*/ ytitle("RD Treatment Effect") /*
+	*/ legend(off) xtitle("Bandwidth") yscale(range(-5 10)) 
+	graph export "Graph_3.png", replace
+restore
+
+*The plot of the five RD estimates indicates results are quite robust to alternative bandwidths: results are similar in magnitude, ranging from 1.8047 (bandwith 0.5*opt_i) and 3.0195 (bandwith opt_i). Increasing the bandwidths increases the sample size, and consequently increases the precision of the estimates obtained. This is why we observe narrower confidence intervals as the bandwidths increase (bandwith 0.5*opt_i estimate's confidence interval is the largest and not significantly different from zero). However, in a RD setting we must keep in mind the existing trade-off between greater sample size improving precision and internal validity. 
+
+
+*(l)
+rddensity x, all
+*Conventional and robust method both indicate we cannot reject the null hypothesis of continuity of the alternative running variable x. 
+
+foreach i in -10 -5 5 10{
+	rddensity x, all c(`i')
+}
+*Futhermore, no significant discountinuity in the alternative running variable is found at the 4 alternatives of cut-off thresholds considered in point (f).
+
+***Graphical analysis***
+rdplot T x, graph_options(title(T-x Discontinuity) ///
+	xtitle(Alternative Running Variable) ytitle(Treatment Variable)) 
+graph rename T_x, replace
+*Fuzzy RDD design. There is a discountinuous jump in the probability of treatment after the cutoff. 
+
+rdplot Y x, graph_options(title(Y-x Discontinuity) ///
+	xtitle(Alternative Running Variable) ytitle(Treatment Variable)) 
+graph rename Y_x, replace
+	
+graph combine T_x Y_x
+graph export "Graph_5.png", replace
+*From the graph there seems to be a discontinuity in the outcome around the cutoff. 
+*To check whether this discountinuity is significant we proceed to run an rdrobust.
+
+rdrobust Y x, fuzzy(T) bwselect(mserd)
+*First stage not significant. 
 
 
 
