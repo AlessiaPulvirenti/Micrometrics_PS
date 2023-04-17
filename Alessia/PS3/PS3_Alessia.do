@@ -29,98 +29,50 @@ from("https://raw.githubusercontent.com/nppackages/lpdensity/master/stata") repl
 
 */
 
-********************************************************************************************
+*******************************************
 **# EXERCISE 1
 
-cd "C:\Users\elena\OneDrive\Desktop\ESS\2nd year\Microeconometrics\PS\problem set 3"
 *(a)
 use "pset_3.dta", clear
 
 rdplot T X, graph_options(xtitle(Running Variable) ytitle(Treatment Variable))
 
-*** We immediately notice that the RD design is sharp and not fuzzy. At the cutoff value c = 0 for the running variable, the treatment variable T displays a clear and sharp discontinuity, jumping from 0 to 1. Hence, this is evidence of the fact that treatment assignment is a deterministic function of our covariate X, and in particular T = 0 for X < 0 and T = 1 for X > 0. ***
+//The current design is a sharp RDD, because the Treatment variable is a deterministic probability function (i.e., it takes either value 1 or 0) of the running variable. There is no partial compliance. 
 
-*(b) 
-global covariates = "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
-
-matrix Table1 = J(9, 4, .)
-
-local i = 1
-
-foreach var of varlist $covariates {
-	
-	qui rdrobust `var' X, kernel(triangular) p(1) bwselect(mserd)
-	 
-	matrix Table1[`i',1] = round(e(h_l), .001)
-	matrix Table1[`i',2] = round(e(tau_cl), .001)
-	matrix Table1[`i',3] = round(e(pv_rb), .001)
-	matrix Table1[`i',4] = round(e(N_h_l) + e(N_h_r), .001)
-	
-	local i = `i' + 1
-}
-
-matrix colnames Table1 = "MSE-Optimal Bandwidth" "RD Estimator" "p-value" "Effective Number of Observations"
-
-matrix list Table1
-
-
-foreach var of varlist $covariates {
-
-	local x : variable label `var'
-	
-	gen label_`var' = "`x'"
-	
-}
-
-putexcel set Table1.xlsx, replace
-
-putexcel A1 = "Variable"
-putexcel B1 = "Label"
-
-
-local i = 2
-foreach var of varlist $covariates{
-	putexcel B`i' = label_`var'
-	putexcel A`i' = "`var'"
-	drop label_`var'
-	local i = `i' + 1
-}
-
-putexcel C1=matrix(Table1), colnames
-
-
-
+*(b) ?????
+local covariates "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
 
 *(c)
-local i = 1
-
-foreach var of varlist $covariates{
-	local x : variable label `var'
-	local y : variable label X
-	qui rdplot `var' X, graph_options(title("RD plot for: `x'") ytitle("Dependent Variable: `var'") xtitle("Running Variable: X, `y'"))
-	graph save mygraph`i'.gph, replace
-	local i = `i' + 1
+foreach z in `covariates'{
+	local vlabel : variable label `z'
+	rdplot `z' X, graph_options(title(`vlabel', size(7pt)) xtitle(Running Variable, size(7pt)) ytitle(Covariate, size(7pt)) legend(off))
+	graph rename `z', replace
 }
+graph combine `covariates'
+graph export Graph_1.pdf, replace
 
-graph combine mygraph1.gph mygraph2.gph mygraph3.gph mygraph4.gph mygraph5.gph mygraph6.gph mygraph7.gph mygraph8.gph mygraph9.gph, iscale (*0.45)
-graph export Graph_1.png, replace
-
-* SHOULD WE ALSO SAVE GRAPHS IN PNG?
 
 *(d)
 * Histogram
-qui rdrobust Y X, c(0) p(1) kernel(triangular) bwselect(mserd)
-scalar bw_h = e(h_l)
-scalar bw_l = -e(h_l)
+rdrobust Y X //Put here options of RD robust
+scalar h_left = -e(h_l)	//Lower bound of the sample used to estimate the polynomial
+scalar h_right = e(h_r)	//Upper bound of the sample used to estimate the polynomial
+twoway (histogram X if X >=h_left & X < 0, freq width(1) color(blue)) ///
+	(histogram X if X >= 0 & X <= h_right, freq width(1) color(green)), xlabel(-30(10)30) ///
+	graphregion(color(white)) xtitle(Score) ytitle(Number of Observations) legend(off)	///
+	xline(0)
+	
+graph rename histo, replace
+	
+*Plot of density (to check for manipulation)
+local h_l = h_left
+local h_r = h_right
+rddensity X, plot plot_range(`h_l' `h_r')
 
-twoway (histogram X if X < 0 & X > bw_l, freq width(1) color(blue)) (histogram X if X >= 0 & X < bw_h, freq width(1) color(red)), xlabel(-25(5)25) xline(0, lwidth(0.5) lcolor(green)) graphregion(color(white)) xtitle("Running Variable")  ytitle("Number of Observations") legend(off) title("Hystogram: frequency of obs. around the cutoff", size(4))
-graph save X_Y.gph, replace
+graph rename dens, replace
 
-rddensity X, plot graph_opt(xline(0, lwidth(0.5) lcolor(green)) legend(off) graphregion(color(white)) ytitle("Density") xtitle("Running Variable") title("Estimated Density of the Running Variable", size(4)))
-graph save density.gph, replace
-
-graph combine X_Y.gph density.gph, cols(1)
-graph export X_Y.png, replace
+graph combine histo dens
+graph export Graph_2.pdf, replace
 
 *(e)
 rddensity X
@@ -143,21 +95,19 @@ forvalues i= -10(5)10{
 * Looking at the outcomes for all 4 alternatives of cut-off thresholds, we can see that we cannot reject the null hypothesis at a significance above 15% for three values of the four chosen. However, at a threshold of -5.0, the null hypothesis of CONTINUITY can be rejected with a p-value of 0.055, i.e., at a standard significance level of 10%. This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
 
 *(g)
-rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-20 y.o. woman vs Islamic vote margin in 1994", size(3)) ytitle("Outcome") xtitle("Running Variable"))
-
-* COMMENT? 
+rdplot Y X, nbins(20 20) graph_options(xtitle(Running Variable) ytitle(Outcome))
 
 *(h)Does electing a mayor from an Islamic party has a significant effect on the educational attainment of women? Do results differ significantly for different kernel choices?
 
-rdrobust Y X, p(1) kernel(triangular) bwselect(mserd)
+rdrobust Y X, p(1) kernel(uniform)
 
-rdrobust Y X, p(1) kernel(uniform) bwselect(mserd)
+rdrobust Y X, p(1) kernel(triangular)
 
-*yes, electing a mayor from an Islamic party has a statistically significant effect on the educational atteinment of women. Estimated coefficients and p-values are no significantly different under both kernels. 
+//WRITE COMMENT HERE
 
 
 *(i)
-* We generate variables to fit a polynomial of order 4.
+* Generate variables to fit a polynomial of order 4 -- USE WEIGHTS! THEY WANT US TO USE TRIANGULAR KERNEL
 gen X_2 = X^2
 gen X_3 = X^3
 gen X_4 = X^4
@@ -166,175 +116,20 @@ gen X_T = T*X
 gen X_T_2 = T*X_2
 gen X_T_3 = T*X_3
 gen X_T_4 = T*X_4
-
-* We estimate the effect of T on Y using a global approach, fitting a polynomial of order 4.
+*
+* Estimate global regression, fitting a polynomial of order 4 on our outcome
 reg Y T ///
 X X_2 X_3 X_4 ///
 X_T X_T_2 X_T_3 X_T_4
 
 
 *(j)
-* We estimate the effect of T on Y using a local approach and save the optimal bandwidth, obtained via *rdrobust*'s mserd bandwidth, in a local:
-rdrobust Y X, all kernel(triangular) bwselect(mserd)
-local opt_i = e(h_l)
-
-*Estimating the local polynomial regression of order 4	on the left of the cut-off
-reg Y X if X >=-`opt_i' & X < 0 
-matrix coef_left = e(b)
-matrix var_left = e(V)
-scalar intercept_left = coef_left[1, 2]
-
-*Estimating the local polynomial regression of order 4 on the right of the cut-off
-reg Y X if X >= 0 & X <=`opt_i'
-matrix coef_right = e(b)
-matrix var_right = e(V)
-scalar intercept_right = coef_right[1, 2]
-
-scalar difference = intercept_right - intercept_left
-matrix var_conventional = var_left + var_right
-scalar se_difference = sqrt(var_conventional[2,2])
-
-scalar list difference
-*difference =  3.0595105
-scalar list se_difference
-*se_difference =  1.2974771
-
-*We re-run the regression performed in point (h)
-rdrobust Y X, p(1) kernel(triangular)
-
-*By estimating the effect of T on Y using a local approach we get different results with respect to those obtained in (h). The treatment effect coefficient obtained with rdrobust is 3.0595105, whereas the one obtained in (h) is 3.0195. 
-*To obtain point (h) *rdrobust*'s estimates under a triangular kernel, we have to run a WLS with weights defined according to the triangular kernel formula. As oppose to the uniform kernel and OLS, the triangular kernel produces local polynomial estimators using non-uniform weights, assigning greater weights to observations closer to the cut-off. 
-*We run also the WLS with the weights to show how to obtain the same result found in (h). 
-
-* Generating the weights
-gen weights = .
-replace weights = (1 - abs(X/`opt_i')) if X < 0 & X >= -`opt_i'
-replace weights = (1 - abs(X/`opt_i')) if X >= 0 & X <= `opt_i'
-
-reg Y X [aw=weights] if X < 0 & X >= -`opt_i'
-matrix coef_left = e(b)
-matrix var_left = e(V)
-scalar intercept_left = coef_left[1, 2]
-
-*Right
-reg Y X [aw=weights] if (X <= `opt_i' & X >=0) 
-matrix coef_right = e(b)
-matrix var_right = e(V)
-scalar intercept_right = coef_right[1, 2]
-
-* Compute the RD effect as rd = right - left
-scalar difference = intercept_right - intercept_left
-matrix var_conventional = var_left + var_right
-scalar se_difference = sqrt(var_conventional[2,2])
-
-scalar list difference
-scalar list se_difference
-
-* Estimation with weights
-reg Y X [aw = weights] if X >= -`opt_i' & X < 0
-matrix coef_left = e(b)
-matrix var_left = e(V)
-scalar intercept_left = coef_left[1, 2]
-
-reg Y X [aw = weights] if X >= 0 & X <= `opt_i'
-matrix coef_right = e(b)
-matrix var_right = e(V)
-scalar intercept_right = coef_right[1, 2]
-
-scalar difference = intercept_right - intercept_left
-matrix var_conventional = var_left + var_right
-scalar se_difference = sqrt(var_conventional[2,2])
-
-scalar list difference
-*difference =  3.0195263
-scalar list se_difference
-*se_difference =  1.1676311
-
-*We re-run the regression performed in (h)
-rdrobust Y X, p(1) kernel(triangular)
-
-*As expected we obtain the same treatment effect coefficient as the one obtained in (h). 
 
 
 *(k)
-*We obtain and store in the local "opt_i" the optimal bandwidths obtained in (h) and re-run the RD using it and alternative bandwidths (also save in locals). 
-rdrobust Y X, all kernel(triangular) p(1) 
-local opt_i = e(h_l)
 
-local bwd050 = 0.5*`opt_i'
-local bwd075 = 0.75*`opt_i'
-local bwd125 = 1.25*`opt_i'
-local bwd15 = 1.5*`opt_i'
-
-di `opt_i' 
-di `bwd050' 
-di `bwd075' 
-di `bwd125' 
-di `bwd15'
-
-matrix define R = J(5, 6, .)
-global bandwidths "`opt_i' `bwd050' `bwd075' `bwd125' `bwd15'"
-local r = 1
-foreach k of global bandwidths {
-	rdrobust Y X, all kernel(triangular) p(1) h(`k')
-	matrix R[`r', 1] = `k'
-	matrix R[`r', 2] = e(tau_cl)
-	matrix R[`r', 3] = e(tau_bc)
-	matrix R[`r', 4] = e(se_tau_rb)
-	matrix R[`r', 5] = R[`r', 2] - invnormal(0.975) * R[`r', 4]
-	matrix R[`r', 6] = R[`r', 2] + invnormal(0.975) * R[`r', 4]
-	local r = `r' + 1
-}
-
-preserve
-	clear
-	svmat R
-	twoway (rcap R5 R6 R1, lcolor(navy)) /*
-	*/ (scatter R2 R1, mcolor(cranberry) yline(0, lcolor(black) lpattern(dash))), /*
-	*/ graphregion(color(white)) /*
-	*/ xlabel(8.62 12.93 17.24 21.55 25.86, labsize(small)) /*
-	*/ ytitle("RD Treatment Effect") /*
-	*/ legend(off) xtitle("Bandwidth") yscale(range(-5 10)) 
-	graph export "Graph_3.png", replace
-restore
-
-*The plot of the five RD estimates indicates results are quite robust to alternative bandwidths: results are similar in magnitude, ranging from 1.8047 (bandwith 0.5*opt_i) and 3.0195 (bandwith opt_i). Increasing the bandwidths increases the sample size, and consequently increases the precision of the estimates obtained. This is why we observe narrower confidence intervals as the bandwidths increase (bandwith 0.5*opt_i estimate's confidence interval is the largest and not significantly different from zero). However, in a RD setting we must keep in mind the existing trade-off between greater sample size improving precision and internal validity. 
-*Overall ROBUST OR NOT (?)
 
 *(l)
-rddensity x, all
-*Conventional and robust method both indicate we cannot reject the null hypothesis of continuity of the alternative running variable x. 
-
-foreach i in -10 -5 5 10{
-	rddensity x, all c(`i')
-}
-*Futhermore, no significant discountinuity in the alternative running variable is found at the 4 alternatives of cut-off thresholds considered in point (f).
-
-local covariates "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
-
-foreach z in `covariates'{
-	local vlabel : variable label `z'
-	rdplot `z' x, graph_options(title(`vlabel', size(7pt)) xtitle(Alternative Running Variable, size(7pt)) ytitle(Covariate, size(7pt)) legend(off))
-	graph rename `z', replace
-}
-graph combine `covariates'
-graph export "Graph_4.png", replace
-*We find that no discountinuities of the covariates at the cut-off. 
- 
-
-***Graphical analysis***
-rdplot T x, graph_options(title(T-x Discontinuity) ///
-	xtitle(Alternative Running Variable) ytitle(Treatment Variable)) 
-graph rename T_x, replace
-*Fuzzy RDD design. There is a discountinuous jump in the probability of treatment after the cutoff. 
-
-rdplot Y x, graph_options(title(Y-x Discontinuity) ///
-	xtitle(Alternative Running Variable) ytitle(Treatment Variable)) 
-graph rename Y_x, replace
-*The graph shows there is discontinuity in the outcome around the cutoff (?)
-	
-graph combine T_x Y_x
-graph export "Graph_5.png", replace
 
 
 **# EXERCISE 2
@@ -344,8 +139,6 @@ use "fraud_pcenter_final.dta", clear
 *(a)
 
 * Generate the "adjusted" measure of distance, both for our proxied variable, _dist, and the dist variable used by Gonzales 2021, so that polling centres located in areas with coverage == 0, will have a negative distance from the cutoff. 
-
-replace _dist = -_dist if _dist < 0
 
 gen _temp=_dist
 replace _temp=-_dist if cov==0
@@ -368,6 +161,8 @@ rdplot cov temp, graph_options(xtitle(Old Running Variable from Gonzales 2021) y
 * RD estimation using the new running variable: 
 rdrobust vote_comb _temp, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
 rdrobust vote_comb_ind _temp, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
+
+rdrobust vote_comb _dist, p(1) kernel(triangular) fuzzy(cov) bwselect(mserd)
 
 
 /* Looking at the RD plot of the treatment variable on the adjusted version of _dist we can see that there is a fuzzy discontinuity in the probability of being treated (i.e., of being indicated as a locality with coverage) around the boundary point. On the other hand, by plotting coverage on the measure of distance used by Gonzales, i.e., temp, we can see that the discontinuity is sharp. 
@@ -438,6 +233,10 @@ xtset segment50 pccode
 
 * To perform IV estimation of eq. (1) of Gonzales 2021, we generate a dummy variable Z_i = 1(_temp >= 0), i.e., and indicator that takes value of 1 if our running variable _dist is greater or equal than the cutoff, 0. Moreover, we create the interaction term between our running variable _dist and the treatment variable, and the instrument for it. 
 
+
+
+*USING VARIABLE _DIST
+
 * Generate the dummy to instrument the treatment variable cov
 gen z =0
 replace z = 1 if _dist >= 0
@@ -480,6 +279,54 @@ foreach var in comb_ind comb {
 		estadd scalar Mean = mean_`var'_2_all
 		estadd scalar Gr = e(N_clust)
  }
+ 
+ 
+* USING VARIABLE _TEMP
+* Generate the dummy to instrument the treatment variable cov
+gen z =0
+replace z = 1 if _tempp >= 0
+
+* Generate interaction term between running variable and treatment variable
+gen _tc = _tempp*cov
+_tempp
+* Generate the interaction term between the running variable and the instrument of cov, to instrument the interaction
+gen _tz = _tempp*z
+
+* The need to create the interaction term and and the instrument for it, arises from the fact that the specification that Gonzales performes with xtreg: xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var', fe robust, is incompatibile with xtivreg. 
+
+
+* We use the newly created variable to perform IV estimations of the specification of eq. (1)
+foreach var in comb_ind comb {	
+	* All regions
+	xtivreg vote_`var' _temp (cov _tc = z _tz)  if ind_seg50==1 & _temp<=hopt_`var', fe vce(robust)
+		est store col1_a_`var'
+		label variable _est_col1_a_`var' "All regions"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_all
+		estadd scalar Gr = e(N_clust)
+		
+		
+	* Southeast
+	xtivreg vote_`var' _temp (cov _tc = z _tz)  if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
+	region2==1, fe vce(robust) 
+		est store col1_b_`var'
+		label variable _est_col1_b_`var' "Southeast"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_1_all
+		estadd scalar Gr = e(N_clust)
+
+	* Northwest
+	xtivreg vote_`var' _temp (cov _tc = z _tz)  if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
+	region2==2, fe vce(robust)
+		est store col1_c_`var'
+		label variable _est_col1_c_`var' "Northwest"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_2_all
+		estadd scalar Gr = e(N_clust)
+ }
+ 
+
+
  
 * Using esttab to output the TeX code of two tables, to be then combined in a unique TeX table with the code by Steve Of Connel retrieved from github (https://github.com/steveofconnell/PanelCombine/blob/master/ExampleUse.do): 
 
