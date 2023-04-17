@@ -37,12 +37,71 @@ use "pset_3.dta", clear
 
 rdplot T X, graph_options(xtitle(Running Variable) ytitle(Treatment Variable))
 
+*** We immediately notice that the RD design is sharp and not fuzzy. At the cutoff value c = 0 for the running variable, the treatment variable T displays a clear and sharp discontinuity, jumping from 0 to 1. Hence, this is evidence of the fact that treatment assignment is a deterministic function of our covariate X, and in particular T = 0 for X < 0 and T = 1 for X > 0. ***
+
+*(b) 
+global covariates = "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
+
+matrix Table1 = J(9, 4, .)
+
+local i = 1
+
+foreach var of varlist $covariates {
+	
+	qui rdrobust `var' X, kernel(triangular) p(1) bwselect(mserd)
+	 
+	matrix Table1[`i',1] = round(e(h_l), .001)
+	matrix Table1[`i',2] = round(e(tau_cl), .001)
+	matrix Table1[`i',3] = round(e(pv_rb), .001)
+	matrix Table1[`i',4] = round(e(N_h_l) + e(N_h_r), .001)
+	
+	local i = `i' + 1
+}
+
+matrix colnames Table1 = "MSE-Optimal Bandwidth" "RD Estimator" "p-value" "Effective Number of Observations"
+
+matrix list Table1
+
+
+foreach var of varlist $covariates {
+
+	local x : variable label `var'
+	
+	gen label_`var' = "`x'"
+	
+}
+
+putexcel set Table1.xlsx, replace
+
+putexcel A1 = "Variable"
+putexcel B1 = "Label"
+
+
+local i = 2
+foreach var of varlist $covariates{
+	putexcel B`i' = label_`var'
+	putexcel A`i' = "`var'"
+	drop label_`var'
+	local i = `i' + 1
+}
+
+putexcel C1=matrix(Table1), colnames
+
+
 //The current design is a sharp RDD, because the Treatment variable is a deterministic probability function (i.e., it takes either value 1 or 0) of the running variable. There is no partial compliance. 
 
 *(b) ?????
 local covariates "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
 
 *(c)
+local i = 1
+
+foreach var of varlist $covariates{
+	local x : variable label `var'
+	local y : variable label X
+	qui rdplot `var' X, graph_options(title("RD plot for: `x'") ytitle("Dependent Variable: `var'") xtitle("Running Variable: X, `y'"))
+	graph save mygraph`i'.gph, replace
+	local i = `i' + 1
 foreach z in `covariates'{
 	local vlabel : variable label `z'
 	rdplot `z' X, graph_options(title(`vlabel', size(7pt)) xtitle(Running Variable, size(7pt)) ytitle(Covariate, size(7pt)) legend(off))
@@ -51,9 +110,19 @@ foreach z in `covariates'{
 graph combine `covariates'
 graph export Graph_1.pdf, replace
 
+graph combine mygraph1.gph mygraph2.gph mygraph3.gph mygraph4.gph mygraph5.gph mygraph6.gph mygraph7.gph mygraph8.gph mygraph9.gph, iscale (*0.45)
+graph export Graph_1.png, replace
+
+* SHOULD WE ALSO SAVE GRAPHS IN PNG?
 
 *(d)
 * Histogram
+qui rdrobust Y X, c(0) p(1) kernel(triangular) bwselect(mserd)
+scalar bw_h = e(h_l)
+scalar bw_l = -e(h_l)
+
+twoway (histogram X if X < 0 & X > bw_l, freq width(1) color(blue)) (histogram X if X >= 0 & X < bw_h, freq width(1) color(red)), xlabel(-25(5)25) xline(0, lwidth(0.5) lcolor(green)) graphregion(color(white)) xtitle("Running Variable")  ytitle("Number of Observations") legend(off) title("Hystogram: frequency of obs. around the cutoff", size(4))
+graph save X_Y.gph, replace
 rdrobust Y X //Put here options of RD robust
 scalar h_left = -e(h_l)	//Lower bound of the sample used to estimate the polynomial
 scalar h_right = e(h_r)	//Upper bound of the sample used to estimate the polynomial
@@ -69,67 +138,42 @@ local h_l = h_left
 local h_r = h_right
 rddensity X, plot plot_range(`h_l' `h_r')
 
+rddensity X, plot graph_opt(xline(0, lwidth(0.5) lcolor(green)) legend(off) graphregion(color(white)) ytitle("Density") xtitle("Running Variable") title("Estimated Density of the Running Variable", size(4)))
+graph save density.gph, replace
 graph rename dens, replace
 
+graph combine X_Y.gph density.gph, cols(1)
+graph export X_Y.png, replace
 graph combine histo dens
 graph export Graph_2.pdf, replace
 
 *(e)
 rddensity X
-
-/*
-Running variable: X.
-------------------------------------------
-            Method |      T          P>|T|
--------------------+----------------------
-            Robust |   -1.3937      0.1634
-------------------------------------------
-*/
-
-/*The null hypothesis of this tests is that the density of the running variable is "continuous" at the cutoff. The p-value of this test tells us that we cannot reject the null hypothesis at a significance of 15%, thus we have no discontinuity in the running variable, and no evidence of manipulation. We can thus conclude that wrt manipulation, this RD design is valid*/
-
-*(f)
-forvalues i= -10(5)10{
-	rddensity X, c(`i')
-}
+@ -143,21 +95,19 @@ forvalues i= -10(5)10{
 * Looking at the outcomes for all 4 alternatives of cut-off thresholds, we can see that we cannot reject the null hypothesis at a significance above 15% for three values of the four chosen. However, at a threshold of -5.0, the null hypothesis of CONTINUITY can be rejected with a p-value of 0.055, i.e., at a standard significance level of 10%. This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
 
 *(g)
+rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-20 y.o. woman vs Islamic vote margin in 1994", size(3)) ytitle("Outcome") xtitle("Running Variable"))
+
+* COMMENT? 
 rdplot Y X, nbins(20 20) graph_options(xtitle(Running Variable) ytitle(Outcome))
 
 *(h)Does electing a mayor from an Islamic party has a significant effect on the educational attainment of women? Do results differ significantly for different kernel choices?
 
+rdrobust Y X, p(1) kernel(triangular) bwselect(mserd)
 rdrobust Y X, p(1) kernel(uniform)
 
+rdrobust Y X, p(1) kernel(uniform) bwselect(mserd)
 rdrobust Y X, p(1) kernel(triangular)
 
+*yes, electing a mayor from an Islamic party has a statistically significant effect on the educational atteinment of women. Estimated coefficients and p-values are no significantly different under both kernels. 
 //WRITE COMMENT HERE
 
 
 *(i)
-* Generate variables to fit a polynomial of order 4 -- USE WEIGHTS! THEY WANT US TO USE TRIANGULAR KERNEL
-gen X_2 = X^2
-gen X_3 = X^3
-gen X_4 = X^4
-*
-gen X_T = T*X
-gen X_T_2 = T*X_2
-gen X_T_3 = T*X_3
-gen X_T_4 = T*X_4
-*
-* Estimate global regression, fitting a polynomial of order 4 on our outcome
-reg Y T ///
-X X_2 X_3 X_4 ///
-X_T X_T_2 X_T_3 X_T_4
 
 
-*(j)
 
-
-*(k)
-
-
-*(l)
 
 
 **# EXERCISE 2
