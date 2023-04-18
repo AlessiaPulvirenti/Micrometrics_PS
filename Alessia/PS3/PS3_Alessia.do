@@ -100,13 +100,7 @@ foreach var of varlist $covariates{
 	qui rdplot `var' X, graph_options(title("RD plot for: `x'") ytitle("Dependent Variable: `var'") xtitle("Running Variable: X, `y'"))
 	graph save mygraph`i'.gph, replace
 	local i = `i' + 1
-foreach z in `covariates'{
-	local vlabel : variable label `z'
-	rdplot `z' X, graph_options(title(`vlabel', size(7pt)) xtitle(Running Variable, size(7pt)) ytitle(Covariate, size(7pt)) legend(off))
-	graph rename `z', replace
 }
-graph combine `covariates'
-graph export Graph_1.pdf, replace
 
 graph combine mygraph1.gph mygraph2.gph mygraph3.gph mygraph4.gph mygraph5.gph mygraph6.gph mygraph7.gph mygraph8.gph mygraph9.gph, iscale (*0.45)
 graph export Graph_1.png, replace
