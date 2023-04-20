@@ -88,8 +88,6 @@ putexcel C1=matrix(Table1), colnames
 
 //The current design is a sharp RDD, because the Treatment variable is a deterministic probability function (i.e., it takes either value 1 or 0) of the running variable. There is no partial compliance. 
 
-*(b) ?????
-local covariates "hischshr1520m i89 vshr_islam1994 partycount lpop1994 merkezi merkezp subbuyuk buyuk"
 
 *(c)
 local i = 1
@@ -539,7 +537,7 @@ foreach var in comb_ind comb {
 
 * Looking at the estimates obtained through xtivreg, again we have performed the RD estimation using first _dist as running variable, and then _temp. 
 
-*Using _dist as running variable, as seen in the previous results with the command rdrobust, the coefficients are extremely large and non-significant. Again, this might be due to the nature of the variable, which is noisy and thus not strongly correlated with the instrument, z.  
+*Using _dist as running variable, as seen in the previous results with the command rdrobust, the coefficients are extremely large and non-significant. Again, this might be due to the nature of the variable, which is noisy and thus not strongly correlated with the instrument, z. We assume that the reason why the distance does not work is because of its negative values and ---- 
 
 *On the other hand, using _temp as the running variable, we obtain similar results as Gonzales 2021. Indeed, as in the original sharp design, the coefficient are statistically and economically significant only when analysing All Regions together and Southeast regions. This is justified by the author with the fact that in the Northwestern regions of the country the levels of fraud were much lower relative to the Southeastern ragions. In terms of magnitude, in the case of All regions, we can see a drop in the outcome variable vote_comb_ind (At least one Station with category C fraud) of about 10 percentage points. For the Southeast region, the drop in the same outcome for polling centres inside the coverage area within the optimal bandwidth is instead of 27 percentage points. Looking at the outcome variable of Panel B of Table 2, "Share of votes under Category C fraud", the drops in All Region analysis and in Southeast region are of 10 percentage points and 21 percentage points, respectively. 
 
