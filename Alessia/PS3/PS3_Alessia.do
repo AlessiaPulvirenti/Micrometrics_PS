@@ -103,7 +103,6 @@ foreach var of varlist $covariates{
 graph combine mygraph1.gph mygraph2.gph mygraph3.gph mygraph4.gph mygraph5.gph mygraph6.gph mygraph7.gph mygraph8.gph mygraph9.gph, iscale (*0.45)
 graph export Graph_1.png, replace
 
-* SHOULD WE ALSO SAVE GRAPHS IN PNG?
 
 *(d)
 * Histogram
@@ -113,16 +112,7 @@ scalar bw_l = -e(h_l)
 
 twoway (histogram X if X < 0 & X > bw_l, freq width(1) color(blue)) (histogram X if X >= 0 & X < bw_h, freq width(1) color(red)), xlabel(-25(5)25) xline(0, lwidth(0.5) lcolor(green)) graphregion(color(white)) xtitle("Running Variable")  ytitle("Number of Observations") legend(off) title("Hystogram: frequency of obs. around the cutoff", size(4))
 graph save X_Y.gph, replace
-rdrobust Y X //Put here options of RD robust
-scalar h_left = -e(h_l)	//Lower bound of the sample used to estimate the polynomial
-scalar h_right = e(h_r)	//Upper bound of the sample used to estimate the polynomial
-twoway (histogram X if X >=h_left & X < 0, freq width(1) color(blue)) ///
-	(histogram X if X >= 0 & X <= h_right, freq width(1) color(green)), xlabel(-30(10)30) ///
-	graphregion(color(white)) xtitle(Score) ytitle(Number of Observations) legend(off)	///
-	xline(0)
-	
-graph rename histo, replace
-	
+
 *Plot of density (to check for manipulation)
 local h_l = h_left
 local h_r = h_right
@@ -134,8 +124,7 @@ graph rename dens, replace
 
 graph combine X_Y.gph density.gph, cols(1)
 graph export X_Y.png, replace
-graph combine histo dens
-graph export Graph_2.pdf, replace
+
 
 *(e)
 rddensity X
@@ -346,7 +335,8 @@ rdrobust Y x, fuzzy(T) bwselect(mserd)
 
 **# EXERCISE 2
 
-cd "C:\Users\pulvi\OneDrive - Università Commerciale Luigi Bocconi\Depr(ESS)ion\2. Second Year\Micrometrics\PS\PS 3"
+cd "C:\Users\pulvi\OneDrive - Università Commerciale Luigi Bocconi\Depr(ESS)ion\2. Second Year\Micrometrics\PS\Micrometrics_PS\Alessia\PS3"
+
 use "fraud_pcenter_final.dta", clear
 
 *(a)
@@ -389,7 +379,7 @@ As to the preliminary RD estimation we perform with RD robust, we use 2 running 
 1) _temp, which is the "adjusted" measure of _dist
 2) _dist, our proxied, and noisy, measure of distance
 
-Looking at the results of RD estimation with the variable temp, we obtain qualitatively negative coefficients, significant at 10% level only for the outcome variable vote_comb (the share of votes under category C fraud). This result is in line with what found by Gonzales (2021) in table 2. On the other hand, using our noisy _dist variable, the coefficients are qualitatively positive (and enormous), as well as non-significant. This is due to the fact that RDrobust is implementing the first stage using _dist as running variable, which has a very low, and non-significant first stage with the treatment variable cov by design. 
+Looking at the results of RD estimation with the variable temp, we obtain qualitatively negative coefficients, significant at 10% level only for the outcome variable vote_comb (the share of votes under category C fraud). This result is in line with what found by Gonzales (2021) in table 2. On the other hand, using our noisy _dist variable, the coefficients are qualitatively positive (and enormous), as well as non-significant. This is due to the fact that RDrobust is implementing the first stage using _dist to construct the Instrumental variable used to instrument cov, which produces a very low and non-significant first stage with the treatment variable cov by design. 
 */
 
 *(b)
@@ -397,7 +387,7 @@ Looking at the results of RD estimation with the variable temp, we obtain qualit
 
 *(c)
 
-*We first compute the Optimal Bandwidth
+*We first compute the Optimal Bandwidth based on the variable _temp
 
 foreach var in /*600 95 ecc*/ comb comb_ind {
 		rdbwselect vote_`var' _temp if ind_seg50==1, vce(cluster segment50) fuzzy(cov) //Add the option fuzzy because we are performing a fuzzy RDD
@@ -433,64 +423,16 @@ xtset, clear
 xtset segment50 pccode
 
 
-*****************************************************************
-*  Local Linear Regression (using distance as forcing variable)
-*****************************************************************
+*********************************************************************
+*  					LOCAL LINEAR REGRESSIONS						*
+*********************************************************************
 
 * In order to replicate the estimation performed by Gonzales (2021), but in the context of a Fuzzy Regression Discontinuity Design, we need to perform an IV estimation of the specification used by Gonzales in eq. (1) of his paper, where the running variable _dist is used as an instrument for the treatment variable coverage, cov. We perform this estimation with the command xtvireg, which allows us to perform 2SLS estimation for panel data models, allowing us to include segment fixed effect. 
 
-* To perform IV estimation of eq. (1) of Gonzales 2021, we generate a dummy variable z_i = 1(_temp >= 0), i.e., and indicator that takes value of 1 if our running variable _dist is greater or equal than the cutoff, 0. Moreover, we create the interaction term between our running variable _dist and the treatment variable, and the instrument for it. 
-
+* To perform IV estimation of eq. (1) of Gonzales 2021, we generate a dummy variable z_i = 1(_temp >= 0), i.e., and indicator function/dummy variable that takes value of 1 if our "adjusted" running variable _temp is greater or equal than the cutoff, and 0 otherwise. Moreover, we create the interaction term between our running variable _temp and the treatment variable, and the instrument for it. 
 
 *****************************************************************
-*		USING VARIABLE _dist AS RUNNING VARIABLE
-*****************************************************************
-* Generate the dummy to instrument the treatment variable cov
-gen z = 0
-replace z = 1 if _dist >= 0
-
-* Generate interaction term between running variable and treatment variable
-gen _tc = _dist*cov
-
-* Generate the interaction term between the running variable and the instrument of cov, to instrument the interaction
-gen _tz = _dist*z
-
-* The need to create the interaction term and and the instrument for it, arises from the fact that the specification that Gonzales performes with xtreg: xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var', fe robust, is incompatibile with xtivreg. 
-
-
-* We use the newly created variable to perform IV estimations of the specification of eq. (1)
-foreach var in comb_ind comb {	
-	* All regions
-	xtivreg vote_`var' _dist (cov _tc = z _tz)  if (ind_seg50==1 & _dist<=hopt_`var'), fe vce(robust)
-		est store col1_a_`var'
-		label variable _est_col1_a_`var' "All regions"
-		estadd scalar Obs = e(N)
-		estadd scalar Mean = mean_`var'_all
-		estadd scalar Gr = e(N_clust)
-		
-		
-	* Southeast
-	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var'_1 & ///
-	region2==1, fe vce(robust) 
-		est store col1_b_`var'
-		label variable _est_col1_b_`var' "Southeast"
-		estadd scalar Obs = e(N)
-		estadd scalar Mean = mean_`var'_1_all
-		estadd scalar Gr = e(N_clust)
-
-	* Northwest
-	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var'_2 & ///
-	region2==2, fe vce(robust) 
-		est store col1_c_`var'
-		label variable _est_col1_c_`var' "Northwest"
-		estadd scalar Obs = e(N)
-		estadd scalar Mean = mean_`var'_2_all
-		estadd scalar Gr = e(N_clust)
- }
- 
- 
-*****************************************************************
-*		USING VARIABLE _temp AS RUNNING VARIABLE
+*		USING VARIABLE _temp AS RUNNING VARIABLE				*	
 *****************************************************************
 * Generate the dummy to instrument the treatment variable cov
 gen z_ = 0
@@ -508,7 +450,7 @@ gen _tz_ = _temp*z
 * We use the newly created variable to perform IV estimations of the specification of eq. (1)
 foreach var in comb_ind comb {	
 	* All regions
-	xtivreg vote_`var' _temp (cov _tc_ = z_ _tz_)  if ind_seg50==1 & _temp<=hopt_`var', fe vce(robust)
+	xtivreg vote_`var' _temp (cov _tc_ = z_ _tz_)  if ind_seg50==1 & _temp<=hopt_`var', fe vce(robust) first
 		est store col1_a_`var'
 		label variable _est_col1_a_`var' "All regions"
 		estadd scalar Obs = e(N)
@@ -518,7 +460,7 @@ foreach var in comb_ind comb {
 		
 	* Southeast
 	xtivreg vote_`var' _temp (cov _tc_ = z_ _tz_)  if ind_seg50==1 & _temp<=hopt_`var'_1 & ///
-	region2==1, fe vce(robust) 
+	region2==1, fe vce(robust) first
 		est store col1_b_`var'
 		label variable _est_col1_b_`var' "Southeast"
 		estadd scalar Obs = e(N)
@@ -527,7 +469,7 @@ foreach var in comb_ind comb {
 
 	* Northwest
 	xtivreg vote_`var' _temp (cov _tc_ = z_ _tz_)  if ind_seg50==1 & _temp<=hopt_`var'_2 & ///
-	region2==2, fe vce(robust)
+	region2==2, fe vce(robust) first
 		est store col1_c_`var'
 		label variable _est_col1_c_`var' "Northwest"
 		estadd scalar Obs = e(N)
@@ -535,12 +477,61 @@ foreach var in comb_ind comb {
 		estadd scalar Gr = e(N_clust)
 }
 
-* Looking at the estimates obtained through xtivreg, again we have performed the RD estimation using first _dist as running variable, and then _temp. 
+*Using _temp as the running variable, both to construct the instrumental dummy variable and in the specification, we obtain similar results as Gonzales 2021. Indeed, as in the original sharp design, the coefficient are statistically and economically significant only when analysing All Regions together and Southeast regions, as well as negative. The positive coefficient as well as the lack of significance for the coefficients in the third column is justified by the author with the fact that in the Northwestern regions of the country the levels of fraud were much lower relative to the Southeastern ragions. 
 
-*Using _dist as running variable, as seen in the previous results with the command rdrobust, the coefficients are extremely large and non-significant. Again, this might be due to the nature of the variable, which is noisy and thus not strongly correlated with the instrument, z. We assume that the reason why the distance does not work is because of its negative values and ---- 
+*Our coefficients are higher than the one found by Gonzales 2021. This can be explained by the fact that fuzzy RD design estimates the LATE at the cutoff level. In this case, the cutoff indicates the areas which have 0 distance from the tower, and thus our coefficients estimate the treatment effect in those areas which are very likely to have a very high mobile phone signal. In terms of interpretation of the coefficients, for All Regions we can see a drop in the outcome variable vote_comb_ind (At least one Station with category C fraud) of about 10 percentage points. For the Southeast region, the drop in the same outcome for polling centres inside the coverage area within the optimal bandwidth is instead of 27 percentage points. Looking at the outcome variable of Panel B of Table 2, "Share of votes under Category C fraud", the drops in All Region analysis and in Southeast region are of 10 percentage points and 21 percentage points, respectively. 
 
-*On the other hand, using _temp as the running variable, we obtain similar results as Gonzales 2021. Indeed, as in the original sharp design, the coefficient are statistically and economically significant only when analysing All Regions together and Southeast regions. This is justified by the author with the fact that in the Northwestern regions of the country the levels of fraud were much lower relative to the Southeastern ragions. In terms of magnitude, in the case of All regions, we can see a drop in the outcome variable vote_comb_ind (At least one Station with category C fraud) of about 10 percentage points. For the Southeast region, the drop in the same outcome for polling centres inside the coverage area within the optimal bandwidth is instead of 27 percentage points. Looking at the outcome variable of Panel B of Table 2, "Share of votes under Category C fraud", the drops in All Region analysis and in Southeast region are of 10 percentage points and 21 percentage points, respectively. 
+*Below, we also propose an alternative IV estimation of eq. (1) inputting _dist in the specification of the regression, but generating the instrumental variable from _temp. Running the code below, we can see that, apart from the case of the "All Regions" sample, the coefficients are always qualitatively different from the ones obtained by Gonzales 2021. Moreover, the p-values are very high, showing lack of significance of the point estimates proposed. We posit that, despite having created the instrument starting from the variable _temp, which represents a good proxy/instrument for the treatment variable cov (we can see it looking at the First Stage results of xtivreg) the odd results that we obtained might be due to the excessive noise in the proxied _dist variable, which is composed of 300 negative observations. In particular, if the "wrongly" negative observations of _dist belong specifically to observation very close to the cutoff, where the coverage is high, this could bias upward our LATE estimate. 
 
+
+**************************************************************************************************
+*		ALTERNATIVE: USING VARIABLE _dist AS RUNNING VARIABLE, instrumenting cov through _temp	 *
+**************************************************************************************************
+* Generate the dummy to instrument the treatment variable cov
+gen z = 0
+replace z = 1 if _temp >= 0
+
+* Generate interaction term between running variable and treatment variable
+gen _tc = _dist*cov
+
+* Generate the interaction term between the running variable and the instrument of cov, to instrument the interaction
+gen _tz = _dist*z
+
+* The need to create the interaction term and and the instrument for it, arises from the fact that the specification that Gonzales performes with xtreg: xtreg vote_`var' cov##c.(dist) if ind_seg50==1 & dist<=hopt_`var', fe robust, is incompatibile with xtivreg. 
+
+
+* We use the newly created variable to perform IV estimations of the specification of eq. (1)
+foreach var in comb_ind comb {	
+	* All regions
+	xtivreg vote_`var' _dist (cov _tc = z _tz)  if (ind_seg50==1 & _dist<=hopt_`var'), fe vce(robust) first
+		est store col1_a_`var'_a
+		label variable _est_col1_a_`var'_a "All regions"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_all
+		estadd scalar Gr = e(N_clust)
+		
+		
+	* Southeast
+	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var'_1 & ///
+	region2==1, fe vce(robust) first
+		est store col1_b_`var'_a
+		label variable _est_col1_b_`var'_a "Southeast"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_1_all
+		estadd scalar Gr = e(N_clust)
+
+	* Northwest
+	xtivreg vote_`var' _dist (cov _tc = z _tz)  if ind_seg50==1 & _dist<=hopt_`var'_2 & ///
+	region2==2, fe vce(robust) first
+		est store col1_c_`var'_a
+		label variable _est_col1_c_`var'_a "Northwest"
+		estadd scalar Obs = e(N)
+		estadd scalar Mean = mean_`var'_2_all
+		estadd scalar Gr = e(N_clust)
+ }
+
+
+*STORING THE RESULTS OF THE FIRST REGRESSION
 
 * Using esttab to output the TeX code of two tables, to be then combined in a unique TeX table with the code by Steve Of Connel retrieved from github (https://github.com/steveofconnell/PanelCombine/blob/master/ExampleUse.do): 
 
@@ -558,56 +549,34 @@ include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/Pa
 panelcombinesutex, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3) paneltitles("At least one station with Category C fraud" "Share of votes under Category C fraud") save(combined_table.tex) addcustomnotes("\begin{minipage}{`linewidth'\linewidth} \footnotesize \smallskip \textbf{Note:} Table shows summary statistics for cars in different estimation samples.\end{minipage}" )
 
 
+**STORING THE RESULTS OF THE SECOND REGRESSION  //TO BE ELIMINATED - USE IT TO LOOK AT THE TEX TABLE IN THE FOLDER
+
+esttab col1_a_comb_*_a col1_b_comb_*_a col1_c_comb_*_a  ///
+using "results_onedim_a_a.tex", replace style(tex) ///
+star(* 0.10 ** 0.05 *** 0.01) ///
+keep(cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label title("Table 2 - EFFECT OF CELLPHONE COVERAGE ON CATEGORY C FRAUD") eqlabels(none) nonotes
+
+esttab col1_a_comb_a  col1_b_comb_a  col1_c_comb_a  ///
+using "results_onedim_b_a.tex", replace style(tex) ///
+cells(b(star fmt(3)) se(par fmt(3))) star(* 0.10 ** 0.05 *** 0.01) ///
+keep(cov) mtitles("\makecell{All Regions\\ (1)}"  "\makecell{Southeast\\(3)}" "\makecell{Northwest\\(5)}") label eqlabels(none) nonotes
+
+include "https://raw.githubusercontent.com/steveofconnell/PanelCombine/master/PanelCombineSutex.do"
+panelcombinesutex, use(results_onedim_a_a.tex results_onedim_b_a.tex)  columncount(3) paneltitles("At least one station with Category C fraud" "Share of votes under Category C fraud") save(combined_table_a.tex) addcustomnotes("\begin{minipage}{`linewidth'\linewidth} \footnotesize \smallskip \textbf{Note:} Table shows summary statistics for cars in different estimation samples.\end{minipage}" )
+
+
+
+//KEEP THIS, THIS GOES BELOW THE ESTTAB RESULTS OF THE FIRST REGRESSION
 * Alternatively, we use the estout command as done by Gonzales in his replication package, to obtaine the two separated tables: 
-
-*[TO DO HERE!]
-
-
-
-
-
-****OTHER (FAILED) ATTEMPTS
-/*
-* Putting the table together - Wide version
 estout col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
-using "results_onedim_a.tex", replace style(tex) ///
+using "results_onedim_a_estout.tex", replace style(tex) ///
 cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
 keep(1.cov) mlabels() label title("Panel A - At least one station with Category C fraud") eqlabels(, none)
 
 estout col1_a_comb  col1_b_comb  col1_c_comb  ///
-using "results_onedim_b.tex", replace style(tex) ///
+using "results_onedim_b_estou.tex", replace style(tex) ///
 label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
 keep(1.cov) mlabels() legend title("Panel B - Share of votes under Category C fraud") eqlabels(, none)
-
-
-
-outreg [col1_a_comb_* col1_b_comb_* col1_c_comb_*] using Table2_rep.xls, excel keep(1.cov) nocons label() title("Panel A - At least one station with Category C fraud") nor2 noni noobs nonotes replace
-
-outreg2 [col1_a_comb  col1_b_comb  col1_c_comb] using Table2_rep.xls, excel keep(1.cov) nocons label() title("Panel B - Share of votes under Category C fraud") nor2 noni noobs replace
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
