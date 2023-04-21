@@ -293,7 +293,7 @@ restore
 
 *(l)
 rddensity x, all
-*Conventional and robust methods both indicate we cannot reject the null hypothesis of continuity of the alternative running variable x. 
+*Conventional and robust methods both indicate that we cannot reject the null hypothesis of manipulation/discontinuity in the alternative running variable.
 
 foreach i in -10 -5 5 10{
 	rddensity x, all c(`i')
