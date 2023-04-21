@@ -141,7 +141,6 @@ forvalues i= -10(5)10{
 *(g)
 rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-20 y.o. woman vs Islamic vote margin in 1994", size(3)) ytitle("Outcome") xtitle("Running Variable"))
 
-* COMMENT? 
 rdplot Y X, nbins(20 20) graph_options(xtitle(Running Variable) ytitle(Outcome))
 
 *(h)Does electing a mayor from an Islamic party has a significant effect on the educational attainment of women? Do results differ significantly for different kernel choices?
@@ -153,8 +152,6 @@ rdrobust Y X, p(1) kernel(uniform) bwselect(mserd)
 rdrobust Y X, p(1) kernel(triangular)
 
 *yes, electing a mayor from an Islamic party has a statistically significant effect on the educational atteinment of women. Estimated coefficients and p-values are no significantly different under both kernels. 
-//WRITE COMMENT HERE
-
 
 *(i)
 *We estimate the effect of T on Y using a global approach through a global WLS regression with weights defined according to the triangular kernel formula. 
@@ -336,7 +333,7 @@ graph export "Graph_5.png", replace
 *However, we also notice that the probability of treatment starts to increase before the threshold and from the graph we cannot establish whether there is a significant jump in treatment status at the cut-off. Hence, to check whether this discountinuity is significant we estimate the treatment effect using *rdrobust* and check whether the first stage is significant.
 
 rdrobust Y x, fuzzy(T) bwselect(mserd)
-*We observe that the first stage estimate not significant, hence we conclude that the RD design with x as an alternative running variable is not a valid design. 
+*We observe that the first stage estimate is not significant, hence we conclude that the RD design with x as an alternative running variable is not a valid design. 
 
 
 
