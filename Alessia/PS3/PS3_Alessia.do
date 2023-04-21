@@ -139,19 +139,15 @@ forvalues i= -10(5)10{
 * The manipulation test indicates that for cutoffs c = -10, -5, 10, there is no evidence of discontinuity (manipulation) in the running variable X. On the other hand, for a cutoff c = -5, we fail to reject the null of continuity at a significance level of 10% This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
 
 *(g)
-rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-20 y.o. woman vs Islamic vote margin in 1994", size(3)) ytitle("Outcome") xtitle("Running Variable"))
+rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-20 y.o. woman vs Islamic vote margin in 1994", size(3)) ytitle("Outcome") xtitle("Running Variable")) binselect(es)
 
-rdplot Y X, nbins(20 20) graph_options(xtitle(Running Variable) ytitle(Outcome))
 
-*(h)Does electing a mayor from an Islamic party has a significant effect on the educational attainment of women? Do results differ significantly for different kernel choices?
-
+*(h)
 rdrobust Y X, p(1) kernel(triangular) bwselect(mserd)
-rdrobust Y X, p(1) kernel(uniform)
-
 rdrobust Y X, p(1) kernel(uniform) bwselect(mserd)
-rdrobust Y X, p(1) kernel(triangular)
 
-*yes, electing a mayor from an Islamic party has a statistically significant effect on the educational atteinment of women. Estimated coefficients and p-values are no significantly different under both kernels. 
+*Yes, electing a mayor from an Islamic party has a statistically significant effect on the educational attainment of women. In particular, the treatment effect of Islamic rule on the educational attainment of women is significant at 95% confidence level and it is about 3 percentage points. Estimated coefficients and p-values are no significantly different under both kernels. 
+
 
 *(i)
 *We estimate the effect of T on Y using a global approach through a global WLS regression with weights defined according to the triangular kernel formula. 
