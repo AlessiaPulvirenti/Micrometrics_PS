@@ -325,8 +325,6 @@ rdrobust Y x, fuzzy(T) bwselect(mserd)
 
 **# EXERCISE 2
 
-cd "C:\Users\pulvi\OneDrive - Università Commerciale Luigi Bocconi\Depr(ESS)ion\2. Second Year\Micrometrics\PS\Micrometrics_PS\Alessia\PS3"
-
 use "fraud_pcenter_final.dta", clear
 
 *(a)
