@@ -72,22 +72,17 @@ foreach var of varlist $covariates {
 
 putexcel set Table1.xlsx, replace
 
-putexcel A1 = "Variable"
-putexcel B1 = "Label"
+putexcel A1 = "Label"
 
 
 local i = 2
 foreach var of varlist $covariates{
-	putexcel B`i' = label_`var'
-	putexcel A`i' = "`var'"
+	putexcel A`i' = label_`var'
 	drop label_`var'
 	local i = `i' + 1
 }
 
 putexcel C1=matrix(Table1), colnames
-
-
-//The current design is a sharp RDD, because the Treatment variable is a deterministic probability function (i.e., it takes either value 1 or 0) of the running variable. There is no partial compliance. 
 
 
 *(c)
@@ -106,31 +101,42 @@ graph export Graph_1.png, replace
 
 
 *(d)
+*Domain of both graphs restricted to the rdrobust bandwidths
+
 * Histogram
-qui rdrobust Y X, c(0) p(1) kernel(triangular) bwselect(mserd)
-scalar bw_h = e(h_l)
-scalar bw_l = -e(h_l)
 
 twoway (histogram X if X < 0 & X > bw_l, freq width(1) color(blue)) (histogram X if X >= 0 & X < bw_h, freq width(1) color(red)), xlabel(-25(5)25) xline(0, lwidth(0.5) lcolor(green)) graphregion(color(white)) xtitle("Running Variable")  ytitle("Number of Observations") legend(off) title("Hystogram: frequency of obs. around the cutoff", size(4))
 graph save X_Y.gph, replace
 
 *Plot of density (to check for manipulation)
-local h_l = h_left
-local h_r = h_right
-rddensity X, plot plot_range(`h_l' `h_r')
-
-rddensity X, plot graph_opt(xline(0, lwidth(0.5) lcolor(green)) legend(off) graphregion(color(white)) ytitle("Density") xtitle("Running Variable") title("Estimated Density of the Running Variable", size(4)))
+local h_l = bw_l
+local h_r = bw_h 
+rddensity X, plot graph_opt(xline(0, lwidth(0.5) lcolor(green)) legend(off) graphregion(color(white)) ytitle("Density") xtitle("Running Variable") title("Estimated Density of the Running Variable", size(4))) plot_range(`h_l' `h_r')
 graph save density.gph, replace
-graph rename dens, replace
 
-graph combine X_Y.gph density.gph, cols(1)
-graph export X_Y.png, replace
+
+graph combine X_Y.gph density.gph, iscale(*0.80)
+graph export Graph_2.png, replace
+
+*Alternative graph with no restrictions on the x axis for the density graph
+
+*Plot of density (to check for manipulation) - with no restrictions
+rddensity X, plot graph_opt(xline(0, lwidth(0.5) lcolor(green)) legend(off) graphregion(color(white)) ytitle("Density") xtitle("Running Variable") title("Estimated Density of the Running Variable", size(4))) 
+graph save density_alt.gph, replace
+
+graph combine X_Y.gph density_alt.gph, iscale(*0.80)
+graph export Graph_2_alternative.png, replace
 
 
 *(e)
 rddensity X
-@ -143,21 +95,19 @@ forvalues i= -10(5)10{
-* Looking at the outcomes for all 4 alternatives of cut-off thresholds, we can see that we cannot reject the null hypothesis at a significance above 15% for three values of the four chosen. However, at a threshold of -5.0, the null hypothesis of CONTINUITY can be rejected with a p-value of 0.055, i.e., at a standard significance level of 10%. This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
+/*The null hypothesis of this tests is that the density of the running variable is "continuous" at the cutoff. The p-value of this test tells us that we cannot reject the null hypothesis at a significance of 15%, thus we have no discontinuity in the running variable, and no evidence of manipulation. We can thus conclude that wrt manipulation around the cutoff of 0, this RD design is valid*/
+
+*(f)
+forvalues i= -10(5)10{
+	rddensity X, c(`i')
+}
+* The manipulation test indicates that for cutoffs c = -10, -5, 10, there is no evidence of discontinuity (manipulation) in the running variable X. On the other hand, for a cutoff c = -5, we fail to reject the null of continuity at a significance level of 10% This means that there might have been some manipulation in the running variable around the value of -5, and this could threaten the validity of our RD design unless the researcher is able to prove that the cause of the discontinuity is not to be found in the ability of units to sort themselves above or below a certain value of the running variable. 
 
 *(g)
 rdplot Y X, nbins(20 20) graph_options(title("Share of high-school educated 15-20 y.o. woman vs Islamic vote margin in 1994", size(3)) ytitle("Outcome") xtitle("Running Variable"))
