@@ -543,12 +543,12 @@ panelcombinesutex, use(results_onedim_a.tex results_onedim_b.tex)  columncount(3
 estout col1_a_comb_* col1_b_comb_* col1_c_comb_*  ///
 using "results_onedim_a_estout.tex", replace style(tex) ///
 cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
-keep(1.cov) mlabels() label title("Panel A - At least one station with Category C fraud") eqlabels(, none)
+keep(cov) mlabels() label title("Panel A - At least one station with Category C fraud") eqlabels(, none)
 
 estout col1_a_comb  col1_b_comb  col1_c_comb  ///
 using "results_onedim_b_estou.tex", replace style(tex) ///
 label cells(b(star fmt(3)) se(par fmt(3))) starlevels(* 0.10 ** 0.05 *** 0.01) ///
-keep(1.cov) mlabels() legend title("Panel B - Share of votes under Category C fraud") eqlabels(, none)
+keep(cov) mlabels() legend title("Panel B - Share of votes under Category C fraud") eqlabels(, none)
 
 
 
