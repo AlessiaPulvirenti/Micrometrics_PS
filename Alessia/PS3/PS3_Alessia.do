@@ -209,9 +209,11 @@ display e(tau_cl)
 *3.0195263
 
 *By estimating the effect of T on Y using the local approach we get the same results with respect to those obtained in (h). We run a WLS with weights defined according to the triangular kernel formula. As oppose to the uniform kernel and OLS, the triangular kernel produces estimators using non-uniform weights, assigning greater weights to observations closer to the cut-off. 
-*In fact, running the local linear regressions without the weights leads to different results. To verify this we re-estimated the regression excluding the weights.  
+*In fact, running the local linear regressions without the weights leads to different results. Below, we prove that running the local linear regression with no weights is equivalent to estimating the effect through rdrobus with a uniform kernel. 
 
 /*We estimate the local linear regression on the left of the cut-off.
+rdrobust Y X, p(1) all kernel(uniform) bwselect(mserd)
+local opt_i = e(h_l)
 reg Y X if X >=-`opt_i' & X < 0 
 matrix coef_left = e(b)
 matrix var_left = e(V)
@@ -234,16 +236,16 @@ scalar list se_difference
 *se_difference =  1.2974771
 
 *We re-run the regression performed in point (h)
-rdrobust Y X, p(1) kernel(triangular)
+rdrobust Y X, p(1) kernel(uniform)
 ereturn list 
 display e(tau_cl)
 *3.0195263
 
 gen difference_2 = difference - e(tau_cl)
 display difference_2
-*0.0399842
+*-1.776e-15
 
-*As expected not including the weights in the local linear regressions leads to different results with respect to those obtained in (h). The difference between the treatment effect coefficients is 0.0399842.*/
+*As expected, not including the weights in the local linear regressions leads to different results with respect to those obtained in (h) with a triangular kernel. On the other hand the newly obtained results are basically identical to those obtained with rdrobust with a uniform kernel*/
 
 
 *(k)
