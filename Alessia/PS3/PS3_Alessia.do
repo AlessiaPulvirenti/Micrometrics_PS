@@ -156,30 +156,18 @@ rdrobust Y X, p(1) kernel(uniform) bwselect(mserd)
 gen X_2 = X^2
 gen X_3 = X^3
 gen X_4 = X^4
+gen X_T = T*X
+gen X_T_2 = T*X_2
+gen X_T_3 = T*X_3
+gen X_T_4 = T*X_4
 
 *We define triangular weights globally.
 gen glob_weights = .
 replace glob_weights = (1 - abs(X/100)) if X < 0 
 replace glob_weights = (1 - abs(X/100)) if X >= 0 
 
-*We estimate the global polynomial regression of order 4 on the left of the cut-off.
-reg Y X X_2 X_3 X_4  [aw = glob_weights] if X < 0
-matrix coef_left = e(b)
-scalar intercept_left = coef_left[1, 5]	
-
-*We estimate the global polynomial regression of order 4 on the right of the cut-off.
-reg Y X X_2 X_3 X_4  [aw = glob_weights] if X >= 0 
-matrix coef_right = e(b)
-scalar intercept_right = coef_right[1, 5]
-
-scalar global_difference = intercept_right - intercept_left
-display global_difference
-*3.0202449
-
-*We re-run the regression performed in point (h)
-rdrobust Y X, p(4) kernel(triangular)  h(100 100) 
-
-*We obtain the same treatment effect coefficient obtained in (h). 
+*We estimate the global polynomial regression of order 4.
+reg Y T X X_2 X_3 X_4 X_T X_T_2 X_T_3 X_T_4 [aw = glob_weights]
 
 
 *(j)
