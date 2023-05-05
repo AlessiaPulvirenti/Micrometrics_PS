@@ -1,10 +1,22 @@
+					*******************************************
+					***										***
+					***		  	Problem Set 4				***
+					***										***
+					***				GROUP 8					***	
+					***										***
+					***		Aleksa Mitrovic		3100079		***
+					***		Elena Neri			3070190		***
+					***		Alessia Pulvirenti	3060894		***
+					***		Tommaso Roccuzzo	3080613		***
+					***										***
+					*******************************************
+
 
 
 use "pset_4.dta", clear
 
 *(a)
 gen TREATED = (num_PSINPRES1980 == 1 | num_PSINPRES1980 == 2)
-
 gen POST_TREATED = POST*TREATED
 
 *(b)
@@ -25,45 +37,64 @@ foreach year in 1993 1996 2000{
 	twoway  (line Y_1_v_`year' year) (line Y_0_v_`year' year, lpattern(dash)), xline(80) title(Parallel Trend Assumption) ytitle(Probability of a health center in a village, size(7pt)) legend(order(1 "Treatment" 2 "Control")) xline(`year') name(gr_`year', replace)
 }
 
+restore
+
 graph combine gr_1993 gr_1996 gr_2000, rows(1) cols(3) iscale(0.9) xsize(10) ysize(4)
 gr export "Graph_1.pdf", replace 
-restore 
 
 * COMMENT HERE
 
 *(c)
-*TO DO!!!!!!!!!!!!
+*Treated-post
+sum HEALTH_CENTER_VL if TREATED==1 & POST==1
+scalar AVG_Y_T_1 = r(mean)
+*Treated-pre
+sum HEALTH_CENTER_VL if TREATED==1 & POST==0
+scalar AVG_Y_T_0 = r(mean)
+*Control-post
+sum HEALTH_CENTER_VL if TREATED==0 & POST==1
+scalar AVG_Y_C_1 = r(mean)
+*Control-pre
+sum HEALTH_CENTER_VL if TREATED==0 & POST==0
+scalar AVG_Y_C_0 = r(mean)
 
 
+matrix Table_1 = [AVG_Y_T_1, AVG_Y_C_1, (AVG_Y_T_1 - AVG_Y_C_1)\ ///
+                  AVG_Y_T_0, AVG_Y_C_0, (AVG_Y_T_0 - AVG_Y_C_0)\ ///
+				  (AVG_Y_T_1-AVG_Y_T_0), (AVG_Y_C_1-AVG_Y_C_0), ((AVG_Y_T_1-AVG_Y_T_0)-(AVG_Y_C_1-AVG_Y_C_0))]
+				  
+matrix rownames Table_1 = "Post=1" "Post=0" "Difference 1"
+matrix list Table_1
+
+putexcel set "Table_1.xlsx", sheet("Table 1") replace
+putexcel A2="POST=1" A3="POST=0" A4="Difference 1" 
+putexcel B1="TREATED=1" C1="TREATED=0" D1="Difference 2" 
+putexcel B2=matrix(Table_1)
 
 
 *(d)
-*i - Pooled OLS
-
-reg HEALTH_CENTER_VL TREATED POST POST_TREATED, cluster(idkab_num)
-est store POLS
+*i - POOLED OLS
+reg HEALTH_CENTER_VL POST_TREATED POST TREATED, vce(cluster idkab_num)
+outreg2 using Table_2.xls, excel replace lab title("Table 2") ctitle("Pooled OLS") br bdec(4) addtext(Year FEs, NO, Village FEs, NO, Cluster, YES)
 
 *COMMENT ON WHETHER THE RESULTS ARE THE SAME AS IN THE TABLE ABOVE
 
 *ii - FE with xtreg
-
-xtreg HEALTH_CENTER_VL POST POST_TREATED i.year, fe i(v_id) cluster(idkab_num)
-est store FE_XTREG
+xtreg HEALTH_CENTER_VL POST_TREATED POST i.year, fe i(v_id) vce(cluster idkab_num)
+outreg2 using Table_2.xls, excel append lab drop(i.year_rk) title("Table 2") ctitle("xtreg") br bdec(4) addtext(Year FEs, YES, Village FEs, YES, Cluster, YES)
 
 * Explain why they ask us to include only the the interaction variable, and not the TREATED variable (?) as asked in the hint. 
 
-*iii FE with areg
+*iii - FE with xtreg
+areg HEALTH_CENTER_VL POST_TREATED POST i.year, absorb(v_id) vce(cluster idkab_num)
+outreg2 using Table_2.xls, excel append lab drop(i.year_rk) title("Table 2") ctitle("areg") br bdec(4) addtext(Year FEs, YES, Village  FEs, YES, Cluster, YES)
 
-areg HEALTH_CENTER_VL POST POST_TREATED i.year, absorb(v_id) cluster(idkab_num)
-est store FE_AREG
-
-outreg2 [POLS, FE_XTREG, FE_AREG] using "TABLE_2.xls", excel replace nocons title("Estimations - point d") keep(POST_TREATED POST) //There's a mistake here, fix later! 
 
 *(e)
 gen INTENSITY = num_PSINPRES1980
 gen POST_INTENSITY = INTENSITY*POST
 
-xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) cluster(idkab_num)
+xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
 
 *This specification allows us to estimate the differential treatment intensity (depending on the number of INPRES schools constructed in the village), rather than estimating simply the treatment effect of having at least 1 INPRES school being constructed with the village (measured) with a dummy variable. 
 
@@ -73,12 +104,11 @@ foreach year in 1990 1993 1996 2000 2003{
 	replace INTENSITY_`year' = 0 if INTENSITY_`year'==.
 }
 
-xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1993 == 1, fe i(v_id) cluster(idkab_num) 
-xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1996 == 1, fe i(v_id) cluster(idkab_num) 
-xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_2000 == 1, fe i(v_id) cluster(idkab_num) 
+xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1993 == 1, fe i(v_id) vce(cluster idkab_num) 
+xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1996 == 1, fe i(v_id) vce(cluster idkab_num) 
+xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_2000 == 1, fe i(v_id) vce(cluster idkab_num) 
 
-**COMMENT***
-
+* For the first two groups of villages, i.e., those who carried out elections in year 1992-1993 and 1994-1996, we can see the coefficients of the interaction between INTENSITY and years before treatment are not statistically significant. However, for the group of villages that carried out elections in years 1997-2000, have the coefficient of INTENSITY*(year = 1996) statistically significant. This might raise concerns about the parallel trend assumption, showing that the number of health centers has been increasing in the years before the first elections with potentially more educated politicians take place. However, Martinez-Bravo shows that looking at many outcomes that measure public service provision, in out of 18 regressions, only two tests are significant at 10% level (and exactly the one we found). This outcome can be due simply to chance (Online Appendix, Table 3A). 
 
 *(g)
 sort v_id year
@@ -91,7 +121,13 @@ xtreg HEALTH_CENTER_VL HEALTH_CENTER_VL_lag1 POST POST_INTENSITY i.year, fe i(v_
 *(h) 
 * We included each of the unbalanced controls interacted with year dummies. 
 
-xtreg HEALTH_CENTER_VL POST POST_INTENSITY dum_otrocop_pre#i.year num_bank_pre#i.year pedati_pre#i.year i.year, fe i(v_id) cluster(idkab_num)
+foreach variable in dum_otrocop_pre num_bank_pre pedati_pre{
+	foreach year in 1990 1993 1996 2000 2003{
+		gen `variable'_`year' = 1*`variable' if year == `year'
+		replace `variable'_`year' = 0 if missing(`variable'_`year')
+}
+}
+xtreg HEALTH_CENTER_VL POST POST_INTENSITY dum_otrocop_pre_* num_bank_pre_* pedati_pre_* i.year, fe i(v_id) vce(cluster idkab_num)
 
 *ARE THE RESULTS ROBUST TO THE INCLUSION OF UNBALANCED BASELINE CONTROLS? - ADD COMMENT
 *ARE RESULTS ROBUS TO THE INCLUSION OF LAGGED - ADD COMMENT***
@@ -106,11 +142,40 @@ replace POST = 1 if year == 1990
 replace POST = 0 if year == 1980
 sum POST
 
-xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num) //insufficient observations???????
+xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
 
 restore
 
 *(j)
+*comment
+
+
+*(l)
+xtset v_id year
+areg HEALTH_CENTER_VL POST_TREATED POST i.year, absorb(v_id) vce(cluster idkab_num)
+scalar beta_fe=_b[POST_TREATED]
+
+twowayfeweights HEALTH_CENTER_VL v_id year POST_TREATED, type(feTR) controls(POST) path("weights.dta")
+ereturn list
+scalar sigma_fe1 = e(lb_se_te)
+
+di sigma_fe1
+
+preserve
+use "weights.dta", clear
+drop if weight==0
+tabstat weight, stats(sd mean sum count) save
+return list
+scalar weights_num = r(StatTotal)[4,1]
+scalar sd_weights = r(StatTotal)[1,1]*weights_num
+scalar sigma_fe2 = abs(beta_fe)/sd_weights
+di sigma_fe2
+restore
+
+
+
+
+*(m)
 *comment
 
 
