@@ -42,7 +42,7 @@ restore
 graph combine gr_1993 gr_1996 gr_2000, rows(1) cols(3) iscale(0.9) xsize(10) ysize(4)
 gr export "Graph_1.pdf", replace 
 
-* COMMENT HERE
+* COMMENT HERE!!!!!!!!!!!!!!!!!!
 
 *(c)
 *Treated-post
@@ -71,6 +71,7 @@ putexcel A2="POST=1" A3="POST=0" A4="Difference 1"
 putexcel B1="TREATED=1" C1="TREATED=0" D1="Difference 2" 
 putexcel B2=matrix(Table_1)
 
+* COMMENT HERE!!!!!!!!!!!!!!!!!!
 
 *(d)
 *i - POOLED OLS
@@ -96,7 +97,7 @@ gen POST_INTENSITY = INTENSITY*POST
 
 xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
 
-*This specification allows us to estimate the differential treatment intensity (depending on the number of INPRES schools constructed in the village), rather than estimating simply the treatment effect of having at least 1 INPRES school being constructed with the village (measured) with a dummy variable. 
+*This specification allows us to estimate the differential treatment intensity (depending on the number of INPRES schools constructed in the village), rather than estimating simply the treatment effect of having at least 1 INPRES school being constructed with the village (measured) with a dummy variable.  [CONTINUE]
 
 *(f)
 foreach year in 1990 1993 1996 2000 2003{
@@ -147,10 +148,11 @@ xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_
 restore
 
 *(j)
-*comment
+* Write comment here (Elena)
 
 
 *(l)
+*ssc install twowayfeweights
 xtset v_id year
 areg HEALTH_CENTER_VL POST_TREATED POST i.year, absorb(v_id) vce(cluster idkab_num)
 scalar beta_fe=_b[POST_TREATED]
@@ -171,9 +173,6 @@ scalar sd_weights = r(StatTotal)[1,1]*weights_num
 scalar sigma_fe2 = abs(beta_fe)/sd_weights
 di sigma_fe2
 restore
-
-
-
 
 *(m)
 *comment
