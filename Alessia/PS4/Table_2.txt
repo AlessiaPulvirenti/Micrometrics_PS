@@ -1,0 +1,31 @@
+Table 2				
+		(1)	(2)	(3)
+VARIABLES	LABELS	Pooled OLS	xtreg	areg
+				
+POST_TREATED	POST_TREATED	0.0122***	0.0167***	0.0167***
+		[0.004]	[0.004]	[0.004]
+POST	POST	0.0414***	-0.0164***	-0.0164***
+		[0.004]	[0.004]	[0.004]
+1990.year	year = 1990		0.0023***	0.0023***
+			[0.001]	[0.001]
+1993.year	year = 1993		0.0047***	0.0047***
+			[0.001]	[0.001]
+1996.year	year = 1996		0.0254***	0.0254***
+			[0.002]	[0.002]
+2000.year	year = 2000		0.0384***	0.0384***
+			[0.004]	[0.004]
+2003.year	year = 2003		0.0944***	0.0944***
+			[0.007]	[0.008]
+TREATED	TREATED	0.0499***		
+		[0.005]		
+Constant	Constant	0.0463***	0.0737***	0.0737***
+		[0.004]	[0.002]	[0.002]
+				
+Observations		59,130	59,130	59,130
+R-squared		0.014	0.063	0.837
+Year FEs		NO	YES	YES
+Village FEs		NO	YES	YES
+Cluster		YES	YES	YES
+Number of v_id			9,855	
+Robust standard errors in brackets				
+*** p<0.01, ** p<0.05, * p<0.1				

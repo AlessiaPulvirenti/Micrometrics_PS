@@ -78,13 +78,13 @@ putexcel B2=matrix(Table_1)
 reg HEALTH_CENTER_VL POST_TREATED POST TREATED, vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel replace lab title("Table 2") ctitle("Pooled OLS") br bdec(4) addtext(Year FEs, NO, Village FEs, NO, Cluster, YES)
 
-*COMMENT ON WHETHER THE RESULTS ARE THE SAME AS IN THE TABLE ABOVE
+*COMMENT ON WHETHER THE RESULTS ARE THE SAME AS IN THE TABLE ABOVE !!!
 
 *ii - FE with xtreg
 xtreg HEALTH_CENTER_VL POST_TREATED POST i.year, fe i(v_id) vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel append lab drop(i.year_rk) title("Table 2") ctitle("xtreg") br bdec(4) addtext(Year FEs, YES, Village FEs, YES, Cluster, YES)
 
-* Explain why they ask us to include only the the interaction variable, and not the TREATED variable (?) as asked in the hint. 
+* Explain why they ask us to include only the the interaction variable, and not the TREATED variable (?) as asked in the hint !!
 
 *iii - FE with xtreg
 areg HEALTH_CENTER_VL POST_TREATED POST i.year, absorb(v_id) vce(cluster idkab_num)
@@ -97,7 +97,7 @@ gen POST_INTENSITY = INTENSITY*POST
 
 xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
 
-*This specification allows us to estimate the differential treatment intensity (depending on the number of INPRES schools constructed in the village), rather than estimating simply the treatment effect of having at least 1 INPRES school being constructed with the village (measured) with a dummy variable.  [CONTINUE]
+*This specification allows us to estimate the differential treatment intensity (depending on the number of INPRES schools constructed in the village), rather than estimating simply the treatment effect of having at least 1 INPRES school being constructed with the village (measured) with a dummy variable.  [CONTINUE] !!!!
 
 *(f)
 foreach year in 1990 1993 1996 2000 2003{
@@ -109,7 +109,7 @@ xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1993 == 1, fe i(v_id) vce(cluster
 xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1996 == 1, fe i(v_id) vce(cluster idkab_num) 
 xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_2000 == 1, fe i(v_id) vce(cluster idkab_num) 
 
-* For the first two groups of villages, i.e., those who carried out elections in year 1992-1993 and 1994-1996, we can see the coefficients of the interaction between INTENSITY and years before treatment are not statistically significant. However, for the group of villages that carried out elections in years 1997-2000, have the coefficient of INTENSITY*(year = 1996) statistically significant. This might raise concerns about the parallel trend assumption, showing that the number of health centers has been increasing in the years before the first elections with potentially more educated politicians take place. However, Martinez-Bravo shows that looking at many outcomes that measure public service provision, in out of 18 regressions, only two tests are significant at 10% level (and exactly the one we found). This outcome can be due simply to chance (Online Appendix, Table 3A). 
+* For the first two groups of villages, i.e., those who carried out elections in year 1992-1993 and 1994-1996, we can see the coefficients of the interaction between INTENSITY and years before treatment are not statistically significant. However, for the group of villages that carried out elections in years 1997-2000, have the coefficient of INTENSITY*(year = 1996) statistically significant. This might raise concerns about the parallel trend assumption, showing that the number of health centers has been increasing in the years before the first elections with potentially more educated politicians take place. However, Martinez-Bravo shows that looking at many outcomes that measure public service provision, in out of 18 regressions, only two tests are significant at 10% level (and exactly the one we found). This outcome can be due simply to chance (Online Appendix, Table 3A). (VERIFICARE QUESTO CODICE CON QUELLO DI ELENA, A LEI VENIVA DIVERSO CREDO) 
 
 *(g)
 sort v_id year
@@ -140,12 +140,17 @@ keep if year == 1986 | year == 1990
 
 replace POST =. 
 replace POST = 1 if year == 1990
-replace POST = 0 if year == 1980
+replace POST = 0 if year == 1986
+replace POST_INTENSITY = POST*INTENSITY
 sum POST
+sum POST_INTENSITY
+tab year
 
 xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
 
 restore
+
+*
 
 *(j)
 * Write comment here (Elena)
@@ -175,7 +180,8 @@ di sigma_fe2
 restore
 
 *(m)
-*comment
+*In our code above we have computed the weights and the standard deviation of the weights, as Clément de Chaisemartin and Xavier D'Haultfoeuille suggest. The computed standard deviation of the weights is 0.6796259. This is the minimal value of standard deviation of the ATEs in each (g-t) cell for which the estimated FE beta and the ATE may be of opposite sign. This means that if this value is very low, close to 0, then under a small amount of treatment effect heterogenity, the ATE and the resulting /beta_fe can be of opposite sign. On the other hand, if the value is high, this means that the two are of opposite sign only under a large (and implausible) amount of treatment effect variability. In our case, the standard deviation is fairly low, and thus we we cannot be confident about the sign of our estimate. Also, this would constitute a serious concern when interpreting the FE coefficient as ATT.
+
 
 
 
