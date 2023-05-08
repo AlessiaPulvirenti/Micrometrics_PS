@@ -109,7 +109,8 @@ xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1993 == 1, fe i(v_id) vce(cluster
 xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_1996 == 1, fe i(v_id) vce(cluster idkab_num) 
 xtreg HEALTH_CENTER_VL INTENSITY_* i.year if v_2000 == 1, fe i(v_id) vce(cluster idkab_num) 
 
-* For the first two groups of villages, i.e., those who carried out elections in year 1992-1993 and 1994-1996, we can see the coefficients of the interaction between INTENSITY and years before treatment are not statistically significant. However, for the group of villages that carried out elections in years 1997-2000, have the coefficient of INTENSITY*(year = 1996) statistically significant. This might raise concerns about the parallel trend assumption, showing that the number of health centers has been increasing in the years before the first elections with potentially more educated politicians take place. However, Martinez-Bravo shows that looking at many outcomes that measure public service provision, in out of 18 regressions, only two tests are significant at 10% level (and exactly the one we found). This outcome can be due simply to chance (Online Appendix, Table 3A). (VERIFICARE QUESTO CODICE CON QUELLO DI ELENA, A LEI VENIVA DIVERSO CREDO) 
+* For the first two groups of villages, i.e., those who carried out elections in year 1992-1993 and 1994-1996, we can see the coefficients of the interaction between INTENSITY and years before treatment are not statistically significant. However, for the group of villages that carried out elections in years 1997-2000, have the coefficient of INTENSITY*(year == 1996) statistically significant. This might raise concerns about the parallel trend assumption, showing that the number of health centers has been increasing in the years before the first elections with potentially more educated politicians take place. However, Martinez-Bravo shows that looking at many outcomes that measure public service provision, in out of 18 regressions, only two tests are significant at 10% level (and exactly the one we found). This outcome can be due simply to chance (Online Appendix, Table 3A). 
+
 
 *(g)
 sort v_id year
@@ -117,7 +118,8 @@ bysort v_id: gen HEALTH_CENTER_VL_lag1=HEALTH_CENTER_VL[_n-1]
 
 xtreg HEALTH_CENTER_VL HEALTH_CENTER_VL_lag1 POST POST_INTENSITY i.year, fe i(v_id) cluster(idkab_num)
 
-*COMMENT ON THE POTENTIAL SOURCES OF BIAS ARISING FROM ESTIMATING SUCH A SPECIFICATION - LOOK AT A&P (CH. 5 AT THE END)
+* **** FIX THIS HERE FROM A&P ***
+*When introducing the laggend dependent variable, the problem is thatthe differenced residual is necessarily correlated with the lagged dependent variable, HEALTH_CENTER_VL_lag1, because both are a function of it 1: Consequently, OLS estimates of (5.3.6) are not consistent for the parameters in (5.3.5), a problem Örst noted by Nickell (1981). This problem can be solved, though the solution requires strong assumptions. The easiest solution is to use yit 2 as an instrument for yit 1 in (5.3.6).10 But this requires that yit 2 be uncorrelated with the di§erenced residuals, it. This seems unlikely since residuals are the part of earnings left over after accounting for covariates. Most peopleís earnings are highly correlated from one year to the next, so that past earnings are an excellent predictor of future earnings and earnings growth . If it is serially correlated, there may be no consistent estimator for (5.3.6). (Note also that the IV strategy using yit 2 as an instrument requires at least three periods to obtain data for t; t 1; and t 2).
 
 *(h) 
 * We included each of the unbalanced controls interacted with year dummies. 
@@ -149,6 +151,8 @@ tab year
 xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
 
 restore
+
+* COMMENT HERE: Do we find statistically significant effects? What do these results tell us about the plausibility of the results being explained by an omitted variable?
 
 *
 
