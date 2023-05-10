@@ -10,8 +10,8 @@
 					***		Tommaso Roccuzzo	3080613		***
 					***										***
 					*******************************************
-
-
+**************************************************************************************************************************************					
+clear all
 
 use "pset_4.dta", clear
 
@@ -42,7 +42,7 @@ restore
 graph combine gr_1993 gr_1996 gr_2000, rows(1) cols(3) iscale(0.9) xsize(10) ysize(4)
 gr export "Graph_1.pdf", replace 
 
-* COMMENT HERE!!!!!!!!!!!!!!!!!!
+* COMMENT HERE (Tommaso)
 
 *(c)
 *Treated-post
@@ -71,20 +71,20 @@ putexcel A2="POST=1" A3="POST=0" A4="Difference 1"
 putexcel B1="TREATED=1" C1="TREATED=0" D1="Difference 2" 
 putexcel B2=matrix(Table_1)
 
-* COMMENT HERE!!!!!!!!!!!!!!!!!!
+* COMMENT HERE (tommaso)
 
 *(d)
 *i - POOLED OLS
 reg HEALTH_CENTER_VL POST_TREATED POST TREATED, vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel replace lab title("Table 2") ctitle("Pooled OLS") br bdec(4) addtext(Year FEs, NO, Village FEs, NO, Cluster, YES)
 
-*COMMENT ON WHETHER THE RESULTS ARE THE SAME AS IN THE TABLE ABOVE !!!
+*COMMENT ON WHETHER THE RESULTS ARE THE SAME AS IN THE TABLE ABOVE (Aleksa)
 
 *ii - FE with xtreg
 xtreg HEALTH_CENTER_VL POST_TREATED POST i.year, fe i(v_id) vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel append lab drop(i.year_rk) title("Table 2") ctitle("xtreg") br bdec(4) addtext(Year FEs, YES, Village FEs, YES, Cluster, YES)
 
-* Explain why they ask us to include only the the interaction variable, and not the TREATED variable (?) as asked in the hint !!
+* Explain why they ask us to include only the the interaction variable, and not the TREATED variable (?) as asked in the hint (Aleksa)
 
 *iii - FE with xtreg
 areg HEALTH_CENTER_VL POST_TREATED POST i.year, absorb(v_id) vce(cluster idkab_num)
@@ -97,7 +97,7 @@ gen POST_INTENSITY = INTENSITY*POST
 
 xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
 
-*This specification allows us to estimate the differential treatment intensity (depending on the number of INPRES schools constructed in the village), rather than estimating simply the treatment effect of having at least 1 INPRES school being constructed with the village (measured) with a dummy variable.  [CONTINUE] !!!!
+*This specification allows us to estimate the differential treatment intensity (depending on the number of INPRES schools constructed in the village), rather than estimating simply the treatment effect of having at least 1 INPRES school being constructed with the village (measured) with a dummy variable. That is, the coefficient on thw POST_INTENSITY variable represents the MARGINAL effect of constructing an extra school. Moreover, despite controlling for the POST dummy, since out Treatment variable in this case is not a binary variable, we are not estimating a saturated model, i.e., a model which has as many coefficients as the potential outcomes that the dependent variable can take. On the other hand, this is still a TWFE model, with village and year FE. Finally, the marginal effect of constructing an extra school according to the estimated model is 1.2 p.p. 
 
 *(f)
 foreach year in 1990 1993 1996 2000 2003{
@@ -118,8 +118,7 @@ bysort v_id: gen HEALTH_CENTER_VL_lag1=HEALTH_CENTER_VL[_n-1]
 
 xtreg HEALTH_CENTER_VL HEALTH_CENTER_VL_lag1 POST POST_INTENSITY i.year, fe i(v_id) cluster(idkab_num)
 
-* **** FIX THIS HERE FROM A&P ***
-*When introducing the laggend dependent variable, the problem is thatthe differenced residual is necessarily correlated with the lagged dependent variable, HEALTH_CENTER_VL_lag1, because both are a function of it 1: Consequently, OLS estimates of (5.3.6) are not consistent for the parameters in (5.3.5), a problem Örst noted by Nickell (1981). This problem can be solved, though the solution requires strong assumptions. The easiest solution is to use yit 2 as an instrument for yit 1 in (5.3.6).10 But this requires that yit 2 be uncorrelated with the di§erenced residuals, it. This seems unlikely since residuals are the part of earnings left over after accounting for covariates. Most peopleís earnings are highly correlated from one year to the next, so that past earnings are an excellent predictor of future earnings and earnings growth . If it is serially correlated, there may be no consistent estimator for (5.3.6). (Note also that the IV strategy using yit 2 as an instrument requires at least three periods to obtain data for t; t 1; and t 2).
+*When introducing the laggend dependent variable, we might introduce the so-called Nickel bias (Nickel, 1981). This can be seen for example, when considering a FE model in first difference (Angrist & Pischke 2009). In this case, we can notice that the residual is correlated with the lag of the oucome, introduced as an independent variable. The OLS trasformation in first difference is thus biased. This problem is further exhacerbated if the error terms are serially correlated across time (very likely in several applications, such as earnings). In this case, we might not be able to retrieve a consistent estimator of the treatment effect. 
 
 *(h) 
 * We included each of the unbalanced controls interacted with year dummies. 
@@ -132,8 +131,8 @@ foreach variable in dum_otrocop_pre num_bank_pre pedati_pre{
 }
 xtreg HEALTH_CENTER_VL POST POST_INTENSITY dum_otrocop_pre_* num_bank_pre_* pedati_pre_* i.year, fe i(v_id) vce(cluster idkab_num)
 
-*ARE THE RESULTS ROBUST TO THE INCLUSION OF UNBALANCED BASELINE CONTROLS? - ADD COMMENT
-*ARE RESULTS ROBUS TO THE INCLUSION OF LAGGED - ADD COMMENT***
+*ARE THE RESULTS ROBUST TO THE INCLUSION OF UNBALANCED BASELINE CONTROLS? - ADD COMMENT (Aleksa)
+*ARE RESULTS ROBUS TO THE INCLUSION OF LAGGED - ADD COMMENT*** (Aleksa)
 
 * (i)
 preserve 
@@ -152,7 +151,7 @@ xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_
 
 restore
 
-* COMMENT HERE: Do we find statistically significant effects? What do these results tell us about the plausibility of the results being explained by an omitted variable?
+* COMMENT HERE: Do we find statistically significant effects? What do these results tell us about the plausibility of the results being explained by an omitted variable? (Tommaso)
 
 *
 
