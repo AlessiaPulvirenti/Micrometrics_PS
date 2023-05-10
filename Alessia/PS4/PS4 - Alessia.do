@@ -156,7 +156,12 @@ restore
 *
 
 *(j)
-* Write comment here (Elena)
+* In a staggered DD design, such as the one implemented in Martinez-Bravo (2017), a potential obstacle to identification of the ATE are heterogenous treatment effects. 
+*The Bacon decomposition theorem states that the two-way fixed effect (TWFE) estimator is a weighted average of all possible two-by-two DD estimates. Weights depend on the size and group variance in treatment and sum up to one.  Weights can also be negative - as discussed by de Chaisemartin and D'haultfoeuille (2020) - and in such case TWFE estimators may be biased even if the parallel trend assumption holds. As stated previously, the TWFE estimator is equal to the expectation of a weighted sum of the ATEs in all (g-t) cells, which compare the evolution of the outcome between treated and control groups at each point in time t. Negative weights arise because it may occur that the control group in some of the two-by-two DD may be treated in both periods (i.e., cases in which the control group has already been treated at a previous point in time - early adopters). In such case, treatment effect are differenced out in the second period due to the DiD specification, leading to negative weights. 
+*Negative weights when coupled with treatment effects heterogeneity across groups and times are an issue for the identification of the ATE. For example, if many ATEs in (g-t) cells are weighted by negative weights, the TWFE estimate will be biased towards zero or even take negative values, preventing its correct interpretation as the ATE. 
+*Martinez-Bravo (2017) explore heterogeneity across villages depending on their baseline level of quality of public good service. The authors find that measures of the INPRES program intensity are significantly higher for villages where the underlying demand for the specific public good was higher (because of the lower provision prior to the program). 
+*Martinez-Bravo (2017) find evidence of heterogenous treatment effects, hence for the reasons states previously we cannot state a priori whether the TWFE estimates can be interpreted as average treatment effect. To do so, we must carry out futher tests to check the robustness of the estimates to heterogenous effects. 
+  
 
 
 *(l)
