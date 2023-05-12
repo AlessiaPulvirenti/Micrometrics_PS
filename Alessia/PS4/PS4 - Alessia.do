@@ -79,14 +79,14 @@ putexcel B2=matrix(Table_1)
 reg HEALTH_CENTER_VL POST_TREATED POST TREATED, vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel replace lab title("Table 2") ctitle("Pooled OLS") br bdec(4) addtext(Year FEs, NO, Village FEs, NO, Cluster, YES)
 
-** Looking at the coefficient of the interaction, we can see that the DD estiamte is .0121682 exactly what we found in the previous point.
+* Looking at the coefficient of the interaction, we can see that the DD estiamte is .0121682 exactly what we found in the previous point.
 
 
 *ii - FE with xtreg
 xtreg HEALTH_CENTER_VL POST_TREATED POST i.year, fe i(v_id) vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel append lab drop(i.year_rk) title("Table 2") ctitle("xtreg") br bdec(4) addtext(Year FEs, YES, Village FEs, YES, Cluster, YES)
 
-** We cannot include the TREATED dummy since it is a village specific time constant variable already captured by the fixed effects. Therefore, Stata omits it to multicollinearity with the FEs. We can see that the estimate is larger compared to the OLS one (.0167212).
+* We cannot include the TREATED dummy since it is a village specific time constant variable already captured by the fixed effects. Therefore, Stata omits it to multicollinearity with the FEs. We can see that the estimate is larger compared to the OLS one (.0167212).
 
 *iii - FE with areg
 areg HEALTH_CENTER_VL POST_TREATED POST i.year, absorb(v_id) vce(cluster idkab_num)
