@@ -42,7 +42,7 @@ restore
 graph combine gr_1993 gr_1996 gr_2000, rows(1) cols(3) iscale(0.9) xsize(10) ysize(4)
 gr export "Graph_1.pdf", replace 
 
-* COMMENT HERE (Tommaso)
+* Overall, looking at the three graphs, it seems that pre-treatment are parallel in all three groups of villages. A small exception is represented by villages in the second group, who are being treated in 1996. In that category, we see that treated units show an increase in the probability of having a health centre in the village before the treatment, with respect to the control group. 
 
 *(c)
 *Treated-post
@@ -71,20 +71,22 @@ putexcel A2="POST=1" A3="POST=0" A4="Difference 1"
 putexcel B1="TREATED=1" C1="TREATED=0" D1="Difference 2" 
 putexcel B2=matrix(Table_1)
 
-* COMMENT HERE (tommaso)
+* We recover the DiD estimator as [(P1T1 - P0T1) - (P1T0 - P0T0)] =  0.0122. Hence, having at least one school constructed in the village increases the probability of having a health center by approximately 1.22 percentage points
+
 
 *(d)
 *i - POOLED OLS
 reg HEALTH_CENTER_VL POST_TREATED POST TREATED, vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel replace lab title("Table 2") ctitle("Pooled OLS") br bdec(4) addtext(Year FEs, NO, Village FEs, NO, Cluster, YES)
 
-*COMMENT ON WHETHER THE RESULTS ARE THE SAME AS IN THE TABLE ABOVE (Aleksa)
+** Looking at the coefficient of the interaction, we can see that the DD estiamte is .0121682 exactly what we found in the previous point.
+
 
 *ii - FE with xtreg
 xtreg HEALTH_CENTER_VL POST_TREATED POST i.year, fe i(v_id) vce(cluster idkab_num)
 outreg2 using Table_2.xls, excel append lab drop(i.year_rk) title("Table 2") ctitle("xtreg") br bdec(4) addtext(Year FEs, YES, Village FEs, YES, Cluster, YES)
 
-* Explain why they ask us to include only the the interaction variable, and not the TREATED variable (?) as asked in the hint (Aleksa)
+** We cannot include the TREATED dummy since it is a village specific time constant variable already captured by the fixed effects. STATA would simply omit it due to multicollinearity problems. We can see that the the two way estimate is slightly larger compared to the OLS one (.0167212).
 
 *iii - FE with xtreg
 areg HEALTH_CENTER_VL POST_TREATED POST i.year, absorb(v_id) vce(cluster idkab_num)
@@ -118,7 +120,8 @@ bysort v_id: gen HEALTH_CENTER_VL_lag1=HEALTH_CENTER_VL[_n-1]
 
 xtreg HEALTH_CENTER_VL HEALTH_CENTER_VL_lag1 POST POST_INTENSITY i.year, fe i(v_id) cluster(idkab_num)
 
-*When introducing the laggend dependent variable, we might introduce the so-called Nickel bias (Nickel, 1981). This can be seen for example, when considering a FE model in first difference (Angrist & Pischke 2009). In this case, we can notice that the residual is correlated with the lag of the oucome, introduced as an independent variable. The OLS trasformation in first difference is thus biased. This problem is further exhacerbated if the error terms are serially correlated across time (very likely in several applications, such as earnings). In this case, we might not be able to retrieve a consistent estimator of the treatment effect. 
+*When controlling also for the laggend dependent variable, we might introduce the so-called Nickel bias (Nickel, 1981). This can be seen for example, when considering a FE model in first difference (Angrist & Pischke 2009). In this case, we can notice that the residual is correlated with the lag of the oucome, introduced as an independent variable. The OLS trasformation in first difference is thus biased. This problem is further exhacerbated if the error terms are serially correlated across time (very likely in several applications). In this case, we might not be able to retrieve a consistent estimator of the treatment effect. 
+ 
 
 *(h) 
 * We included each of the unbalanced controls interacted with year dummies. 
@@ -131,27 +134,26 @@ foreach variable in dum_otrocop_pre num_bank_pre pedati_pre{
 }
 xtreg HEALTH_CENTER_VL POST POST_INTENSITY dum_otrocop_pre_* num_bank_pre_* pedati_pre_* i.year, fe i(v_id) vce(cluster idkab_num)
 
-*ARE THE RESULTS ROBUST TO THE INCLUSION OF UNBALANCED BASELINE CONTROLS? - ADD COMMENT (Aleksa)
-*ARE RESULTS ROBUS TO THE INCLUSION OF LAGGED - ADD COMMENT*** (Aleksa)
+*Most of the unbalanced baseline controls included have statistically insignificant effects, except for the few of them that are significant at 5% and have a positive effect. Concerning the variables previously included in (e), we see that their estimates are all more or less the same, therefore we can claim that our results remain robust despite the inclusion of unbalanced baseline controls. 
+
+*Adding the lagged outcomes in (g), we notice that the variable controlling for year 1993 becomes insignificant, and that the more importance is assigned to the lagged variable, being the most significant one than to the rest of the variables in the model, whose effects have decreased. This is likley due to the Nickel Bias (Nickel, 1981), explained in question (g): the bias is due to the correlation between the error term and the lagged dependent outcome. Moreover, if the the error terms are serially correlated across we might not be able to retrieve a consistent estimator of the treatment effect. So, we can claim that the results are not robust to the inclusion of the lagged outcome. 
+
 
 * (i)
-preserve 
+preserve
 
-keep if year == 1986 | year == 1990
+drop if year>1990
 
-replace POST =. 
-replace POST = 1 if year == 1990
-replace POST = 0 if year == 1986
-replace POST_INTENSITY = POST*INTENSITY
-sum POST
-sum POST_INTENSITY
-tab year
 
-xtreg HEALTH_CENTER_VL POST POST_INTENSITY i.year, fe i(v_id) vce(cluster idkab_num)
+gen PLACEBO_POST = 1 if year == 1990
+replace PLACEBO_POST = 0 if year < 1990
+gen PLACEBO_POST_INTENSITY = PLACEBO_POST*INTENSITY
+
+xtreg HEALTH_CENTER_VL PLACEBO_POST PLACEBO_POST*INTENSITY, fe i(v_id) cluster(idkab_num)
 
 restore
 
-* COMMENT HERE: Do we find statistically significant effects? What do these results tell us about the plausibility of the results being explained by an omitted variable? (Tommaso)
+*The coefficient of interest is the one on PLACEBO_POST_INTENSITY, which is positive but has an associated p-value of 0.489, therefore it is insignificant. We are satisfied by this result which sustains our design. Indeed, there appears to be no effect in the pre-treatment years. Thus, it is unlikely that the previosuly estimated causal effect of interest is caused by Omitted Variable Bias, which would have been picked also up in this placebo test and disguised as a significant causal effect. Notice that year fixed effect (the dummy for 1990) have been excluded from the regression because of multicollinearity with PLACEBO_POST. ***
 
 *
 
