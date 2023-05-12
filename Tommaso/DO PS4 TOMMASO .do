@@ -13,6 +13,7 @@
 											
 cd "/Users/tommasoroccuzzo/Library/Mobile Documents/com~apple~CloudDocs/Tommaso/Appunti/Bocconi/2021-2022/2° Semestre/Microeconometrics/Problem Sets/PS 4"
 
+*** QUESTION 1 ***
 
 use pset_4.dta, clear
 
@@ -52,7 +53,7 @@ graph combine graph1.gph graph2.gph graph3.gph, saving(Graph_1, replace) cols(3)
 
 restore
 
-*** INSERT COMMENT HERE ***
+*** From what we observe in the graph, it appears that pre-treatment trends are indeed parallel in all three sets of villages. ***
 
 
 *(c)
@@ -62,16 +63,16 @@ matrix rownames A = "POST=1" "POST=0" "Difference 1"
 matrix colnames A = "TREATED=1" "TREATED=0" "Difference 2"
 
 sum HEALTH_CENTER_VL if POST == 1 & TREATED == 1
-scalar P1T1 = r(mean)
+scalar P1T1 = round(r(mean), 0.0001) 
 
 sum HEALTH_CENTER_VL if POST == 1 & TREATED == 0
-scalar P1T0 = r(mean)
+scalar P1T0 = round(r(mean), 0.0001)
 
 sum HEALTH_CENTER_VL if POST == 0 & TREATED == 1
-scalar P0T1 = r(mean)
+scalar P0T1 = round(r(mean), 0.0001)
 
 sum HEALTH_CENTER_VL if POST == 0 & TREATED == 0
-scalar P0T0 = r(mean)
+scalar P0T0 = round(r(mean), 0.0001)
 
 matrix A[1,1]= P1T1
 matrix A[1,2]= P1T0
@@ -86,14 +87,14 @@ matrix A[3,3] = (P1T1 - P0T1) - (P1T0 - P0T0)
 putexcel set TABLE_1, replace
 putexcel A1 = matrix(A), names
 
-*** INSERT COMMENT HERE ***
+*** We recover the DiD estimator as [(P1T1 - P0T1) - (P1T0 - P0T0)] =  0,0122. Hence, having at least one school constructed in the village increases the proability of having a health center by approximately 1.22 percentage points ***
 
 
 *(d)
 
 reg HEALTH_CENTER_VL POST TREATED POST*TREATED, cluster(idkab_num)
 
-* alternatively, reg HEALTH_CENTER_VL POST##TREATED, cluster(idkab_num) *
+* alternatively, reg HEALTH_CENTER_VL POST##TREATED, cluster(idkab_num)
 
 outreg2 using TABLE_2.xls, excel replace
 
@@ -158,6 +159,4 @@ xtreg HEALTH_CENTER_VL PLACEBO_POST PLACEBO_POST*INTENSITY, fe i(v_id) cluster(i
 
 restore
 
-*** THE DUMMY ON 1990 (IF INCLUDED) IS DROPPED BECAUSE OF MULTICOLLINEARITY WITH PLACEBO_POST ***
-
-*(j)
+*** The coefficient of interest is the one on PLACEBO_POST_INTENSITY, which is positive but has an associated p-value of 0.489, therefore it is completely insignificant. We are satisfied by this result which sustains our design. Indeed, there appears to be no effect in the pre-treatment years. Thus, it is unlikely that the previosuly estimated causal effect of interest is caused by Omitted Variable Bias, which would have been picked also up in this placebo test and disguised as a significant causal effect. ***
